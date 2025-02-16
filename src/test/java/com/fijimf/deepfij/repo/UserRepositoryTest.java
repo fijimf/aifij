@@ -159,9 +159,7 @@ public class UserRepositoryTest {
 
         userRepository.save(user1);
 
-        assertThrows(Exception.class, () -> {
-            userRepository.save(user2);
-        }, "Should throw exception for duplicate username.");
+        assertThrows(Exception.class, () -> userRepository.save(user2), "Should throw exception for duplicate username.");
     }
 
     @Test
