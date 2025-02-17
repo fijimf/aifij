@@ -1,6 +1,7 @@
 package com.fijimf.deepfij.controller;
 
 import com.fijimf.deepfij.auth.util.JwtUtil;
+import com.fijimf.deepfij.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -15,9 +16,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -33,12 +36,15 @@ public class AuthControllerTest {
     @Mock
     private UserDetailsService userDetailsService;
 
+    @Mock
+    private UserService userService;
+
     private AuthController authController;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        authController = new AuthController(authenticationManager, jwtUtil, userDetailsService);
+        authController = new AuthController(authenticationManager, jwtUtil, userDetailsService, userService);
     }
 
     @Test
@@ -109,4 +115,65 @@ public class AuthControllerTest {
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertNull(response.getBody());
     }
+
+    @Test
+    void register_ShouldSucceedWithValidRequest() {
+        // Arrange
+        AuthRequest registerRequest = new AuthRequest("testUser", "testPassword");
+
+        when(userDetailsService.loadUserByUsername(anyString())).thenThrow(new UsernameNotFoundException("User not found with username:"));
+
+        when(userService.createUser("testUser", "testPassword", List.of("USER"))).thenReturn(org.springframework.security.core.userdetails.User
+                .withUsername("testUser")
+                .password("testPassword")
+                .disabled(false)
+                .build());
+
+        when(jwtUtil.generateToken(anyString())).thenReturn("testToken");
+
+        // Act
+        ResponseEntity<Map<String, String>> response = authController.register(registerRequest);
+        // Assert
+        verify(userService).createUser("testUser", "testPassword", List.of("USER"));
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().containsKey("token"));
+
+    }
+
+    @Test
+    void register_ShouldFailWithBlankArgs() {
+        // Arrange
+        AuthRequest registerRequest = new AuthRequest("", "testPassword");
+
+
+        // Act
+        ResponseEntity<Map<String, String>> response = authController.register(registerRequest);
+        // Assert
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue( response.getBody().containsKey("error"));
+
+    }
+    @Test
+    void register_ShouldFailWithDuplicateUsername() {
+        // Arrange
+        AuthRequest registerRequest = new AuthRequest("testUser", "testPassword");
+
+        UserDetails userDetails = mock(UserDetails.class);
+        when(userDetailsService.loadUserByUsername(anyString())).thenReturn(userDetails);
+
+        // Act
+        ResponseEntity<Map<String, String>> response = authController.register(registerRequest);
+        // Assert
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue( response.getBody().containsKey("error"));
+
+    }
+
+
+
 }

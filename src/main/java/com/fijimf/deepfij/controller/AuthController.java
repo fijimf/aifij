@@ -1,6 +1,9 @@
 package com.fijimf.deepfij.controller;
 
-import com.fijimf.deepfij.auth.util.JwtUtil;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,8 +17,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.fijimf.deepfij.auth.util.JwtUtil;
+import com.fijimf.deepfij.service.UserService;
 
 @RestController
 public class AuthController {
@@ -26,10 +29,13 @@ public class AuthController {
 
     private final UserDetailsService userDetailsService;
 
-    public AuthController(@Autowired AuthenticationManager authenticationManager, @Autowired JwtUtil jwtUtil, @Autowired UserDetailsService userDetailsService) {
+    private final UserService userService;
+
+    public AuthController(@Autowired AuthenticationManager authenticationManager, @Autowired JwtUtil jwtUtil, @Autowired UserDetailsService userDetailsService, @Autowired UserService userService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
+        this.userService = userService;
     }
 
 
@@ -51,8 +57,40 @@ public class AuthController {
         } catch (UsernameNotFoundException usernameNotFoundException) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
+    }
 
-
+    @PostMapping("/register")
+    public ResponseEntity<Map<String, String>> register(@RequestBody AuthRequest authRequest) {
+        try {
+            // Validate request
+            if (authRequest.getUsername() == null || authRequest.getPassword() == null ||
+                authRequest.getUsername().trim().isEmpty() || authRequest.getPassword().trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Username and password are required"));
+            }
+    
+            // Check if username already exists
+            try {
+                userDetailsService.loadUserByUsername(authRequest.getUsername());
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "Username already exists"));
+            } catch (UsernameNotFoundException e) {
+                // Username is available, continue with registration
+            }
+    
+            // Create new user
+            UserDetails newUser = userService.createUser(authRequest.getUsername(), authRequest.getPassword(), List.of("USER"));
+    
+            // Generate token for automatic login
+            String token = jwtUtil.generateToken(newUser.getUsername());
+            
+            return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("token", token, "message", "User registered successfully"));
+                
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Registration failed: " + e.getMessage()));
+        }
     }
 }
 
