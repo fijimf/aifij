@@ -1,4 +1,4 @@
-package com.fijimf.deepfij.service.scraping;
+package com.fijimf.deepfij.model.scraping.team;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -7,7 +7,7 @@ import java.util.List;
 
 // Represents a League (e.g., NCAA Men's Basketball)
 @JsonIgnoreProperties(ignoreUnknown = true)
-class League {
+public class League {
     private String id;
     private String uid;
     private String name;

@@ -1,6 +1,7 @@
-package com.fijimf.deepfij.model;
+package com.fijimf.deepfij.model.scraping.standings;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)

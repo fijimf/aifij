@@ -1,7 +1,7 @@
-package com.fijimf.deepfij.model;
+package com.fijimf.deepfij.model.scraping.standings;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fijimf.deepfij.service.scraping.Team;
+import com.fijimf.deepfij.model.scraping.team.Team;
 
 import java.util.List;
 

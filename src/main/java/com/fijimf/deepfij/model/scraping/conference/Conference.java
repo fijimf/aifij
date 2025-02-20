@@ -1,4 +1,4 @@
-package com.fijimf.deepfij.service.scraping;
+package com.fijimf.deepfij.model.scraping.conference;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

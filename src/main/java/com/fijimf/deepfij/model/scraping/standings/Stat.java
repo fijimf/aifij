@@ -1,4 +1,4 @@
-package com.fijimf.deepfij.model;
+package com.fijimf.deepfij.model.scraping.standings;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

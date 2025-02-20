@@ -1,7 +1,11 @@
 package com.fijimf.deepfij.service.scraping;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fijimf.deepfij.model.StandingsResponse;
+import com.fijimf.deepfij.model.scraping.conference.Conference;
+import com.fijimf.deepfij.model.scraping.conference.ConferenceResponse;
+import com.fijimf.deepfij.model.scraping.standings.StandingsResponse;
+import com.fijimf.deepfij.model.scraping.team.Sport;
+import com.fijimf.deepfij.model.scraping.team.SportsResponse;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -15,7 +19,7 @@ public class ScrapingService {
     private static final String CONFERENCES_API_URL = "https://site.web.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard/conferences";
     private static final String TEAMS_API_URL = "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/teams?limit=500";
     private static final String STANDINGS_API_URL = "https://site.api.espn.com/apis/v2/sports/basketball/mens-college-basketball/standings?season=%d";
-
+    private final static String SCOREBOARD_API_URL = "https://site.web.api.espn.com/apis/v2/scoreboard/header?sport=basketball&league=mens-college-basketball&limit=200&groups=50&dates=%d";
     public List<Conference> fetchConferences() {
         HttpClient httpClient = HttpClient.newHttpClient();
 

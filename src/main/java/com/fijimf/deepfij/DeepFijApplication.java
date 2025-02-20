@@ -29,7 +29,6 @@ public class DeepFijApplication {
         User u = userRepository.findByUsername("admin");
         if (u==null) {
             userMgr.createUser("admin", password,List.of("USER", "ADMIN"));
-            userRepository.save(u);
         } else {
             userMgr.updatePassword(u, password);
         }

@@ -1,4 +1,4 @@
-package com.fijimf.deepfij.service.scraping;
+package com.fijimf.deepfij.model.scraping.team;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -7,7 +7,7 @@ import java.util.List;
 
 // Root model representing all the data
 @JsonIgnoreProperties(ignoreUnknown = true)
-class SportsResponse {
+public class SportsResponse {
     @JsonProperty("sports")
     private List<Sport> sports;
 

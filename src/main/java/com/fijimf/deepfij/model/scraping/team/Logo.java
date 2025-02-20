@@ -1,4 +1,4 @@
-package com.fijimf.deepfij.service.scraping;
+package com.fijimf.deepfij.model.scraping.team;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -6,7 +6,7 @@ import java.util.List;
 
 // Represents a Logo (Team logo images)
 @JsonIgnoreProperties(ignoreUnknown = true)
-class Logo {
+public class Logo {
     private String href;
     private String alt;
     private List<String> rel;
