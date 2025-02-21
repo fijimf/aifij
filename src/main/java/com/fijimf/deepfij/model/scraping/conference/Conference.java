@@ -5,9 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 // Defines a Conference Object to map JSON data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record Conference(

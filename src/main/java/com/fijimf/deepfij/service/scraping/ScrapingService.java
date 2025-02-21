@@ -14,7 +14,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
-import java.util.Optional;
 
 public class ScrapingService {
 
@@ -87,9 +86,7 @@ public class ScrapingService {
             if (response.statusCode() == HttpURLConnection.HTTP_OK) {
                 // Map JSON response into Java objects
                 ObjectMapper mapper = new ObjectMapper();
-                StandingsResponse standingsResponse = mapper.readValue(response.body(), StandingsResponse.class);
-
-                return standingsResponse;
+                return mapper.readValue(response.body(), StandingsResponse.class);
             } else {
                 throw new RuntimeException("Failed to fetch standings data. HTTP status code: " + response.statusCode());
             }
@@ -102,15 +99,10 @@ public class ScrapingService {
         HttpClient client = HttpClient.newHttpClient();
 
         try {
-            // Step 2: Create an HttpClient instance
-
-
-            // Step 3: Create an HttpRequest object
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(new URL(String.format(SCOREBOARD_API_URL, date)).toURI())
                     .build();
 
-            // Step 4: Send the request and capture the response
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == HttpURLConnection.HTTP_OK) {
@@ -142,9 +134,7 @@ public class ScrapingService {
                 league.events().forEach(event->{
                     System.out.println(event.shortName());
                     System.out.println(event.neutralSite()+" -- "+event.note());
-                    event.competitors().forEach(comp->{
-                        System.out.println(comp.name()+","+ comp.tournamentMatchup());
-                    });
+                    event.competitors().forEach(comp-> System.out.println(comp.name()+","+ comp.tournamentMatchup()));
                 });
             });
         });
