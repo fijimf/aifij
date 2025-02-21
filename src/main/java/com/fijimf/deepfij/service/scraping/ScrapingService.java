@@ -40,7 +40,7 @@ public class ScrapingService {
                 ObjectMapper mapper = new ObjectMapper();
                 ConferenceResponse apiConferenceResponse = mapper.readValue(response.body(), ConferenceResponse.class);
 
-                return apiConferenceResponse.getConferences();
+                return apiConferenceResponse.conferences();
             } else {
                 throw new RuntimeException("Failed to fetch data. HTTP status code: " + response.statusCode());
             }
@@ -63,7 +63,7 @@ public class ScrapingService {
                 ObjectMapper mapper = new ObjectMapper();
                 SportsResponse sportsResponse = mapper.readValue(response.body(), SportsResponse.class);
 
-                return sportsResponse.getSports();
+                return sportsResponse.sports();
             } else {
                 throw new RuntimeException("Failed to fetch data. HTTP Status: " + response.statusCode());
             }

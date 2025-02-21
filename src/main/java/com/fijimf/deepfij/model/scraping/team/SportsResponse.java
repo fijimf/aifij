@@ -7,15 +7,7 @@ import java.util.List;
 
 // Root model representing all the data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SportsResponse {
-    @JsonProperty("sports")
-    private List<Sport> sports;
-
-    public List<Sport> getSports() {
-        return sports;
-    }
-
-    public void setSports(List<Sport> sports) {
-        this.sports = sports;
-    }
+public record SportsResponse(
+        @JsonProperty("sports") List<Sport> sports
+) {
 }
