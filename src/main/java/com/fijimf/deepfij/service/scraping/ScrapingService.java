@@ -7,6 +7,8 @@ import com.fijimf.deepfij.model.scraping.scoreboard.ScoreboardResponse;
 import com.fijimf.deepfij.model.scraping.standings.StandingsResponse;
 import com.fijimf.deepfij.model.scraping.team.Sport;
 import com.fijimf.deepfij.model.scraping.team.SportsResponse;
+import com.fijimf.deepfij.model.scraping.team.Team;
+import com.fijimf.deepfij.model.scraping.team.TeamWrapper;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -19,6 +21,7 @@ public class ScrapingService {
 
     private static final String CONFERENCES_API_URL = "https://site.web.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard/conferences";
     private static final String TEAMS_API_URL = "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/teams?limit=500";
+    private static final String TEAM_API_URL = "http://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/teams/%s";
     private static final String STANDINGS_API_URL = "https://site.api.espn.com/apis/v2/sports/basketball/mens-college-basketball/standings?season=%d";
     private final static String SCOREBOARD_API_URL = "https://site.web.api.espn.com/apis/v2/scoreboard/header?sport=basketball&league=mens-college-basketball&limit=200&groups=50&dates=%d";
 
@@ -70,6 +73,38 @@ public class ScrapingService {
             throw new RuntimeException("Error fetching teams: " + e.getMessage(), e);
         }
     }
+
+    public Team fetchTeamById(String id) {
+        return fetchTeam(id);
+    }
+
+    public Team fetchTeamBySlug(String slug) {
+        return fetchTeam(slug);
+    }
+
+    private Team fetchTeam(String p) {
+        HttpClient client = HttpClient.newHttpClient();
+
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(new URL(TEAM_API_URL.formatted(p)).toURI())
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == HttpURLConnection.HTTP_OK) {
+                ObjectMapper mapper = new ObjectMapper();
+                TeamWrapper wrapper = mapper.readValue(response.body(), TeamWrapper.class);
+                return wrapper.team();
+            } else {
+                throw new RuntimeException("Failed to fetch data. HTTP Status: " + response.statusCode());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error fetching teams: " + e.getMessage(), e);
+        }
+
+    }
+
 
     public StandingsResponse fetchStandings(int year) {
         HttpClient httpClient = HttpClient.newHttpClient();
@@ -131,10 +166,10 @@ public class ScrapingService {
             sport.leagues().forEach(league -> {
                 System.out.println(league.shortName());
                 System.out.println(league.isTournament());
-                league.events().forEach(event->{
+                league.events().forEach(event -> {
                     System.out.println(event.shortName());
-                    System.out.println(event.neutralSite()+" -- "+event.note());
-                    event.competitors().forEach(comp-> System.out.println(comp.name()+","+ comp.tournamentMatchup()));
+                    System.out.println(event.neutralSite() + " -- " + event.note());
+                    event.competitors().forEach(comp -> System.out.println(comp.name() + "," + comp.tournamentMatchup()));
                 });
             });
         });

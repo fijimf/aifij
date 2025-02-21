@@ -1,7 +1,6 @@
 package com.fijimf.deepfij.model.scraping.team;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fijimf.deepfij.model.scraping.conference.ConferenceResponse;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -33,20 +32,46 @@ public class TeamJsonParseTest {
 
             assertThat(wrapper.team()).isNotNull();
             Team team = wrapper.team();
-        //    System.out.println(team);
+            //    System.out.println(team);
             assertThat(team).isNotNull();
             assertThat(team.uid()).isNotNull();
             assertThat(team.name()).isNotNull();
             assertThat(team.abbreviation()).isNotNull();
             assertThat(team.displayName()).isNotNull();
-           // assertThat(team.alternateColor()).isNotNull(); Austin Peay
+            // assertThat(team.alternateColor()).isNotNull(); Austin Peay
             assertThat(team.logos()).isNotNull();
             assertThat(team.logos()).hasSizeGreaterThanOrEqualTo(1);
             assertThat(team.nickname()).isNotNull();
-       //     assertThat(team.primaryColor()).isNotNull(); LeMoyne
+            //     assertThat(team.primaryColor()).isNotNull(); LeMoyne
             assertThat(team.shortDisplayName()).isNotNull();
             assertThat(team.slug()).isNotNull();
         });
 
+    }
+
+    @Test
+    public void testParseSingleTeamJson() throws IOException {
+        String villanova = new String(getClass().getClassLoader()
+                .getResourceAsStream("json/team1.json")
+                .readAllBytes());
+
+        ObjectMapper mapper = new ObjectMapper();
+        TeamWrapper wrapper = mapper.readValue(villanova, TeamWrapper.class);
+        Team team = wrapper.team();
+        assertThat(team).isNotNull();
+        assertThat(team.id()).isNotNull();
+        assertThat(team.id()).isEqualTo("222");
+        assertThat(team.name()).isNotNull();
+        assertThat(team.name()).isEqualTo("Wildcats");
+        assertThat(team.uid()).isNotNull();
+        assertThat(team.abbreviation()).isNotNull();
+        assertThat(team.displayName()).isNotNull();
+        // assertThat(team.alternateColor()).isNotNull(); Austin Peay
+        assertThat(team.logos()).isNotNull();
+        assertThat(team.logos()).hasSizeGreaterThanOrEqualTo(1);
+        assertThat(team.nickname()).isNotNull();
+        //     assertThat(team.primaryColor()).isNotNull(); LeMoyne
+        assertThat(team.shortDisplayName()).isNotNull();
+        assertThat(team.slug()).isNotNull();
     }
 }
