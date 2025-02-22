@@ -12,10 +12,18 @@ CREATE TABLE rawTeam (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     nickname VARCHAR(50) NOT NULL,
+    abbreviation VARCHAR(5) NOT NULL,
+    slug VARCHAR(150) NOT NULL,
+    long_name VARCHAR(150) NOT NULL,
+    espn_id VARCHAR(100) NOT NULL,
     primary_color VARCHAR(7),
     secondary_color VARCHAR(7),
     logo_url VARCHAR(255),
-    UNIQUE(name)
+    UNIQUE(name),
+    UNIQUE(abbreviation),
+    UNIQUE(slug),
+    UNIQUE(long_name),
+    UNIQUE(espn_id)
 );
 
 CREATE TABLE season (

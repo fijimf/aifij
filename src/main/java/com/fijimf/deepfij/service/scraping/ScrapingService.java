@@ -156,24 +156,24 @@ public class ScrapingService {
     }
 
 
-    public static void main(String[] args) {
-        ScrapingService service = new ScrapingService();
-        ScoreboardResponse response = service.fetchScoreboard(20241123);
-
-        // Print teams
-        response.sports().forEach(sport -> {
-            System.out.println(sport.name());
-            sport.leagues().forEach(league -> {
-                System.out.println(league.shortName());
-                System.out.println(league.isTournament());
-                league.events().forEach(event -> {
-                    System.out.println(event.shortName());
-                    System.out.println(event.neutralSite() + " -- " + event.note());
-                    event.competitors().forEach(comp -> System.out.println(comp.name() + "," + comp.tournamentMatchup()));
-                });
-            });
-        });
-    }
+//    public static void main(String[] args) {
+//        ScrapingService service = new ScrapingService();
+//        ScoreboardResponse response = service.fetchScoreboard(20241123);
+//
+//        // Print teams
+//        response.sports().forEach(sport -> {
+//            System.out.println(sport.name());
+//            sport.leagues().forEach(league -> {
+//                System.out.println(league.shortName());
+//                System.out.println(league.isTournament());
+//                league.events().forEach(event -> {
+//                    System.out.println(event.shortName());
+//                    System.out.println(event.neutralSite() + " -- " + event.note());
+//                    event.competitors().forEach(comp -> System.out.println(comp.name() + "," + comp.tournamentMatchup()));
+//                });
+//            });
+//        });
+//    }
 //        StandingsResponse response = service.fetchStandings(2014);
 //
 //        // Print teams
@@ -185,17 +185,29 @@ public class ScrapingService {
 //        });
 //    }
 
-//    public static void main(String[] args) {
-//        ScrapingService service = new ScrapingService();
-//        List<Sport> sports = service.fetchTeams();
-//
-//        // Print teams
-//        sports.forEach(sport -> {
-//            sport.getLeagues().forEach(league -> {
-//                league.getTeams().forEach(teamWrapper -> System.out.println(teamWrapper.getTeam().getDisplayName()));
-//            });
-//        });
-//    }
+    public static void main(String[] args) {
+        ScrapingService service = new ScrapingService();
+        List<Sport> sports = service.fetchTeams();
+
+        // Print teams
+        sports.forEach(sport -> {
+            sport.leagues().forEach(league -> {
+                league.teams().forEach(teamWrapper -> {
+                    RawTeam t = teamWrapper.rawTeam();
+                    System.out.println("%s|%s|%s|%s|%s|%s|%s"
+                            .formatted(t.name(),
+                                    t.abbreviation(),
+                                    t.location(),
+                                    t.displayName(),
+                                    t.slug(),
+                                    t.shortDisplayName(),
+                                    t.nickname()));
+                    t.logos().stream().filter(l->l.rel().contains("primary_logo_on_white_color")).forEach(System.out::println);
+                  //  if (!t.nickname().equals(t.shortDisplayName())) System.out.println("**************************************");
+                });
+            });
+        });
+    }
 
 //    // Main method for simple testing
 //    public static void main(String[] args) {

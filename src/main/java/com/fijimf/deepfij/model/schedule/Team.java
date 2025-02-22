@@ -27,6 +27,27 @@ public class Team {
     @Column(name = "nickname", nullable = false)
     private String nickname;
 
+
+    @NotEmpty
+    @Size(max = 5)
+    @Column(name = "abbreviation", unique = true, nullable = false)
+    private String abbreviation;
+
+    @NotEmpty
+    @Size(max = 150)
+    @Column(name = "slug", unique = true, nullable = false)
+    private String slug;
+
+    @NotEmpty
+    @Size(max = 150)
+    @Column(name = "long_name", unique = true, nullable = false)
+    private String longName;
+
+    @NotEmpty
+    @Size(max = 100)
+    @Column(name = "espn_id", unique = true, nullable = false)
+    private String espnId;
+
     @Pattern(regexp = "#[0-9A-Fa-f]{6}")
     @Column(name = "primary_color")
     private String primaryColor;
@@ -66,6 +87,38 @@ public class Team {
 
     public void setNickname(String nickname) {
         this.nickname = nickname;
+    }
+
+    public String getAbbreviation() {
+        return abbreviation;
+    }
+
+    public void setAbbreviation(String abbreviation) {
+        this.abbreviation = abbreviation;
+    }
+
+    public String getSlug() {
+        return slug;
+    }
+
+    public void setSlug(String slug) {
+        this.slug = slug;
+    }
+
+    public String getLongName() {
+        return longName;
+    }
+
+    public void setLongName(String longName) {
+        this.longName = longName;
+    }
+
+    public String getEspnId() {
+        return espnId;
+    }
+
+    public void setEspnId(String espn_id) {
+        this.espnId = espnId;
     }
 
     public String getPrimaryColor() {
