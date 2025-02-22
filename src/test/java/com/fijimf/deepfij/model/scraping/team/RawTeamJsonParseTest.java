@@ -8,7 +8,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TeamJsonParseTest {
+public class RawTeamJsonParseTest {
 
     @Test
     public void testParseJson() throws IOException {
@@ -30,21 +30,21 @@ public class TeamJsonParseTest {
         assertThat(teams).hasSize(361);
         teams.forEach(wrapper -> {
 
-            assertThat(wrapper.team()).isNotNull();
-            Team team = wrapper.team();
+            assertThat(wrapper.rawTeam()).isNotNull();
+            RawTeam rawTeam = wrapper.rawTeam();
             //    System.out.println(team);
-            assertThat(team).isNotNull();
-            assertThat(team.uid()).isNotNull();
-            assertThat(team.name()).isNotNull();
-            assertThat(team.abbreviation()).isNotNull();
-            assertThat(team.displayName()).isNotNull();
+            assertThat(rawTeam).isNotNull();
+            assertThat(rawTeam.uid()).isNotNull();
+            assertThat(rawTeam.name()).isNotNull();
+            assertThat(rawTeam.abbreviation()).isNotNull();
+            assertThat(rawTeam.displayName()).isNotNull();
             // assertThat(team.alternateColor()).isNotNull(); Austin Peay
-            assertThat(team.logos()).isNotNull();
-            assertThat(team.logos()).hasSizeGreaterThanOrEqualTo(1);
-            assertThat(team.nickname()).isNotNull();
+            assertThat(rawTeam.logos()).isNotNull();
+            assertThat(rawTeam.logos()).hasSizeGreaterThanOrEqualTo(1);
+            assertThat(rawTeam.nickname()).isNotNull();
             //     assertThat(team.primaryColor()).isNotNull(); LeMoyne
-            assertThat(team.shortDisplayName()).isNotNull();
-            assertThat(team.slug()).isNotNull();
+            assertThat(rawTeam.shortDisplayName()).isNotNull();
+            assertThat(rawTeam.slug()).isNotNull();
         });
 
     }
@@ -57,21 +57,21 @@ public class TeamJsonParseTest {
 
         ObjectMapper mapper = new ObjectMapper();
         TeamWrapper wrapper = mapper.readValue(villanova, TeamWrapper.class);
-        Team team = wrapper.team();
-        assertThat(team).isNotNull();
-        assertThat(team.id()).isNotNull();
-        assertThat(team.id()).isEqualTo("222");
-        assertThat(team.name()).isNotNull();
-        assertThat(team.name()).isEqualTo("Wildcats");
-        assertThat(team.uid()).isNotNull();
-        assertThat(team.abbreviation()).isNotNull();
-        assertThat(team.displayName()).isNotNull();
+        RawTeam rawTeam = wrapper.rawTeam();
+        assertThat(rawTeam).isNotNull();
+        assertThat(rawTeam.id()).isNotNull();
+        assertThat(rawTeam.id()).isEqualTo("222");
+        assertThat(rawTeam.name()).isNotNull();
+        assertThat(rawTeam.name()).isEqualTo("Wildcats");
+        assertThat(rawTeam.uid()).isNotNull();
+        assertThat(rawTeam.abbreviation()).isNotNull();
+        assertThat(rawTeam.displayName()).isNotNull();
         // assertThat(team.alternateColor()).isNotNull(); Austin Peay
-        assertThat(team.logos()).isNotNull();
-        assertThat(team.logos()).hasSizeGreaterThanOrEqualTo(1);
-        assertThat(team.nickname()).isNotNull();
+        assertThat(rawTeam.logos()).isNotNull();
+        assertThat(rawTeam.logos()).hasSizeGreaterThanOrEqualTo(1);
+        assertThat(rawTeam.nickname()).isNotNull();
         //     assertThat(team.primaryColor()).isNotNull(); LeMoyne
-        assertThat(team.shortDisplayName()).isNotNull();
-        assertThat(team.slug()).isNotNull();
+        assertThat(rawTeam.shortDisplayName()).isNotNull();
+        assertThat(rawTeam.slug()).isNotNull();
     }
 }

@@ -7,7 +7,7 @@ import java.util.List;
 
 // Represents a Team (individual teams inside leagues)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record Team(
+public record RawTeam(
         String id,
         String uid,
         String slug,

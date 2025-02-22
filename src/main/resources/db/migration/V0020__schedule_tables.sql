@@ -8,7 +8,7 @@ CREATE TABLE conference (
     UNIQUE(short_name)
 );
 
-CREATE TABLE team (
+CREATE TABLE rawTeam (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     nickname VARCHAR(50) NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE season (
 CREATE TABLE conference_mapping (
     id SERIAL PRIMARY KEY,
     season_id BIGINT NOT NULL REFERENCES season(id),
-    team_id BIGINT NOT NULL REFERENCES team(id),
+    team_id BIGINT NOT NULL REFERENCES rawTeam(id),
     conference_id BIGINT NOT NULL REFERENCES conference(id),
     UNIQUE(season_id, team_id)
 );
@@ -41,8 +41,8 @@ CREATE TABLE game (
     season_id BIGINT NOT NULL REFERENCES season(id),
     date DATE NOT NULL,
     time TIME,
-    home_team_id BIGINT NOT NULL REFERENCES team(id),
-    away_team_id BIGINT NOT NULL REFERENCES team(id),
+    home_team_id BIGINT NOT NULL REFERENCES rawTeam(id),
+    away_team_id BIGINT NOT NULL REFERENCES rawTeam(id),
     home_score INTEGER,
     away_score INTEGER,
     status VARCHAR(20),

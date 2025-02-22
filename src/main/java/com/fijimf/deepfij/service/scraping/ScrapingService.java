@@ -7,7 +7,7 @@ import com.fijimf.deepfij.model.scraping.scoreboard.ScoreboardResponse;
 import com.fijimf.deepfij.model.scraping.standings.StandingsResponse;
 import com.fijimf.deepfij.model.scraping.team.Sport;
 import com.fijimf.deepfij.model.scraping.team.SportsResponse;
-import com.fijimf.deepfij.model.scraping.team.Team;
+import com.fijimf.deepfij.model.scraping.team.RawTeam;
 import com.fijimf.deepfij.model.scraping.team.TeamWrapper;
 
 import java.net.HttpURLConnection;
@@ -74,15 +74,15 @@ public class ScrapingService {
         }
     }
 
-    public Team fetchTeamById(String id) {
+    public RawTeam fetchTeamById(String id) {
         return fetchTeam(id);
     }
 
-    public Team fetchTeamBySlug(String slug) {
+    public RawTeam fetchTeamBySlug(String slug) {
         return fetchTeam(slug);
     }
 
-    private Team fetchTeam(String p) {
+    private RawTeam fetchTeam(String p) {
         HttpClient client = HttpClient.newHttpClient();
 
         try {
@@ -95,7 +95,7 @@ public class ScrapingService {
             if (response.statusCode() == HttpURLConnection.HTTP_OK) {
                 ObjectMapper mapper = new ObjectMapper();
                 TeamWrapper wrapper = mapper.readValue(response.body(), TeamWrapper.class);
-                return wrapper.team();
+                return wrapper.rawTeam();
             } else {
                 throw new RuntimeException("Failed to fetch data. HTTP Status: " + response.statusCode());
             }

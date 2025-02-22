@@ -6,6 +6,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 // Wrapper for Team object (data in the "team" field)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record TeamWrapper(@JsonProperty("team") Team team) {
+public record TeamWrapper(@JsonProperty("team") RawTeam rawTeam) {
 }
 
