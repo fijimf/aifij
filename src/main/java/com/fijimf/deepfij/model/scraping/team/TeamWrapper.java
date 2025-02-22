@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fijimf.deepfij.model.schedule.Team;
 
-import java.util.Optional;
-
 
 // Wrapper for Team object (data in the "team" field)
 @JsonIgnoreProperties(ignoreUnknown = true)
