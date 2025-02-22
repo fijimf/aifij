@@ -1,14 +1,18 @@
 package com.fijimf.deepfij.service.scraping;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fijimf.deepfij.model.schedule.Team;
 import com.fijimf.deepfij.model.scraping.conference.Conference;
 import com.fijimf.deepfij.model.scraping.conference.ConferenceResponse;
 import com.fijimf.deepfij.model.scraping.scoreboard.ScoreboardResponse;
 import com.fijimf.deepfij.model.scraping.standings.StandingsResponse;
+import com.fijimf.deepfij.model.scraping.team.RawTeam;
 import com.fijimf.deepfij.model.scraping.team.Sport;
 import com.fijimf.deepfij.model.scraping.team.SportsResponse;
-import com.fijimf.deepfij.model.scraping.team.RawTeam;
 import com.fijimf.deepfij.model.scraping.team.TeamWrapper;
+import com.fijimf.deepfij.repo.TeamRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -17,13 +21,19 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 
+@Component
 public class ScrapingService {
 
+    private final TeamRepository teamRepo;
     private static final String CONFERENCES_API_URL = "https://site.web.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard/conferences";
     private static final String TEAMS_API_URL = "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/teams?limit=500";
     private static final String TEAM_API_URL = "http://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/teams/%s";
     private static final String STANDINGS_API_URL = "https://site.api.espn.com/apis/v2/sports/basketball/mens-college-basketball/standings?season=%d";
     private final static String SCOREBOARD_API_URL = "https://site.web.api.espn.com/apis/v2/scoreboard/header?sport=basketball&league=mens-college-basketball&limit=200&groups=50&dates=%d";
+
+    public ScrapingService(@Autowired TeamRepository teamRepo) {
+        this.teamRepo = teamRepo;
+    }
 
     public List<Conference> fetchConferences() {
         HttpClient httpClient = HttpClient.newHttpClient();
@@ -103,6 +113,18 @@ public class ScrapingService {
             throw new RuntimeException("Error fetching teams: " + e.getMessage(), e);
         }
 
+    }
+
+    public List<Team> loadTeams() {
+        fetchTeams()
+                .getFirst()
+                .leagues()
+                .getFirst()
+                .teams()
+                .forEach(w -> {
+                    teamRepo.save(w.toTeam());
+                });
+        return teamRepo.findAll();
     }
 
 
@@ -185,29 +207,29 @@ public class ScrapingService {
 //        });
 //    }
 
-    public static void main(String[] args) {
-        ScrapingService service = new ScrapingService();
-        List<Sport> sports = service.fetchTeams();
-
-        // Print teams
-        sports.forEach(sport -> {
-            sport.leagues().forEach(league -> {
-                league.teams().forEach(teamWrapper -> {
-                    RawTeam t = teamWrapper.rawTeam();
-                    System.out.println("%s|%s|%s|%s|%s|%s|%s"
-                            .formatted(t.name(),
-                                    t.abbreviation(),
-                                    t.location(),
-                                    t.displayName(),
-                                    t.slug(),
-                                    t.shortDisplayName(),
-                                    t.nickname()));
-                    t.logos().stream().filter(l->l.rel().contains("primary_logo_on_white_color")).forEach(System.out::println);
-                  //  if (!t.nickname().equals(t.shortDisplayName())) System.out.println("**************************************");
-                });
-            });
-        });
-    }
+//    public static void main(String[] args) {
+//        ScrapingService service = new ScrapingService();
+//        List<Sport> sports = service.fetchTeams();
+//
+//        // Print teams
+//        sports.forEach(sport -> {
+//            sport.leagues().forEach(league -> {
+//                league.teams().forEach(teamWrapper -> {
+//                    RawTeam t = teamWrapper.rawTeam();
+//                    System.out.println("%s|%s|%s|%s|%s|%s|%s"
+//                            .formatted(t.name(),
+//                                    t.abbreviation(),
+//                                    t.location(),
+//                                    t.displayName(),
+//                                    t.slug(),
+//                                    t.shortDisplayName(),
+//                                    t.nickname()));
+//                    t.logos().stream().filter(l->l.rel().contains("primary_logo_on_white_color")).forEach(System.out::println);
+//                  //  if (!t.nickname().equals(t.shortDisplayName())) System.out.println("**************************************");
+//                });
+//            });
+//        });
+//    }
 
 //    // Main method for simple testing
 //    public static void main(String[] args) {
