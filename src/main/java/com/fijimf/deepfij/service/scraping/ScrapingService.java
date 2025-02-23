@@ -1,8 +1,9 @@
 package com.fijimf.deepfij.service.scraping;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fijimf.deepfij.model.schedule.Conference;
 import com.fijimf.deepfij.model.schedule.Team;
-import com.fijimf.deepfij.model.scraping.conference.Conference;
+import com.fijimf.deepfij.model.scraping.conference.RawConference;
 import com.fijimf.deepfij.model.scraping.conference.ConferenceResponse;
 import com.fijimf.deepfij.model.scraping.scoreboard.ScoreboardResponse;
 import com.fijimf.deepfij.model.scraping.standings.StandingsResponse;
@@ -10,6 +11,7 @@ import com.fijimf.deepfij.model.scraping.team.RawTeam;
 import com.fijimf.deepfij.model.scraping.team.Sport;
 import com.fijimf.deepfij.model.scraping.team.SportsResponse;
 import com.fijimf.deepfij.model.scraping.team.TeamWrapper;
+import com.fijimf.deepfij.repo.ConferenceRepository;
 import com.fijimf.deepfij.repo.TeamRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -25,17 +27,19 @@ import java.util.List;
 public class ScrapingService {
 
     private final TeamRepository teamRepo;
+    private final ConferenceRepository conferenceRepo;
     private static final String CONFERENCES_API_URL = "https://site.web.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard/conferences";
     private static final String TEAMS_API_URL = "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/teams?limit=500";
     private static final String TEAM_API_URL = "http://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/teams/%s";
     private static final String STANDINGS_API_URL = "https://site.api.espn.com/apis/v2/sports/basketball/mens-college-basketball/standings?season=%d";
     private final static String SCOREBOARD_API_URL = "https://site.web.api.espn.com/apis/v2/scoreboard/header?sport=basketball&league=mens-college-basketball&limit=200&groups=50&dates=%d";
 
-    public ScrapingService(@Autowired TeamRepository teamRepo) {
+    public ScrapingService(@Autowired TeamRepository teamRepo, @Autowired ConferenceRepository conferenceRepo) {
         this.teamRepo = teamRepo;
+        this.conferenceRepo = conferenceRepo;
     }
 
-    public List<Conference> fetchConferences() {
+    public List<RawConference> fetchConferences() {
         HttpClient httpClient = HttpClient.newHttpClient();
 
         try {
@@ -125,6 +129,11 @@ public class ScrapingService {
                     teamRepo.save(w.toTeam());
                 });
         return teamRepo.findAll();
+    }
+
+    public List<Conference> loadConferences() {
+        fetchConferences().forEach(c-> conferenceRepo.save(c.toConference()));
+        return conferenceRepo.findAll();
     }
 
 
