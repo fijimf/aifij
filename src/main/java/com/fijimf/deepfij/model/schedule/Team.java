@@ -117,7 +117,7 @@ public class Team {
         return espnId;
     }
 
-    public void setEspnId(String espn_id) {
+    public void setEspnId(String espnId) {
         this.espnId = espnId;
     }
 
