@@ -1,4 +1,4 @@
-package com.fijimf.deepfij.service.scraping;
+package com.fijimf.deepfij.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fijimf.deepfij.model.schedule.Conference;
@@ -119,22 +119,6 @@ public class ScrapingService {
 
     }
 
-    public List<Team> loadTeams() {
-        fetchTeams()
-                .getFirst()
-                .leagues()
-                .getFirst()
-                .teams()
-                .forEach(w -> {
-                    teamRepo.save(w.toTeam());
-                });
-        return teamRepo.findAll();
-    }
-
-    public List<Conference> loadConferences() {
-        fetchConferences().forEach(c-> conferenceRepo.save(c.toConference()));
-        return conferenceRepo.findAll();
-    }
 
 
     public StandingsResponse fetchStandings(int year) {
