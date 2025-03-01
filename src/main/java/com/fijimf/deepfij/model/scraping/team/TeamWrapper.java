@@ -9,19 +9,9 @@ import com.fijimf.deepfij.model.schedule.Team;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record TeamWrapper(@JsonProperty("team") RawTeam rawTeam) {
     public Team toTeam(){
-        RawTeam rawTeam = this.rawTeam;
-        Team team = new Team();
-        team.setId(0L);
-        team.setEspnId(rawTeam.id());
-        team.setPrimaryColor(rawTeam.primaryColor());
-        team.setSecondaryColor( rawTeam.alternateColor());
-        team.setAbbreviation(rawTeam.abbreviation());
-        team.setNickname(rawTeam.name());
-        team.setName(rawTeam.nickname());
-        team.setLongName(rawTeam.location());
-        team.setSlug(rawTeam.slug());
-        rawTeam.logos().stream().filter(l->l.rel().contains("primary_logo_on_white_color")).forEach(l->team.setLogoUrl(l.href()));
-        return team;
+        return this.rawTeam.getTeam();
     }
+
+
 }
 
