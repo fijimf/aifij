@@ -95,8 +95,6 @@ public class ScheduleService {
                         return Stream.empty();
                     }
                 });
-
-
             });
         }).toList();
 
@@ -140,8 +138,8 @@ public class ScheduleService {
         logger.info("For " + yyyy + " there are " + conferenceMappingRepository.count() + " teams");
 
         Stream.iterate(s.getStartDate(), date -> !date.isAfter(s.getEndDate()), date -> date.plusDays(1)).forEach(
-                d->{
-                   gameRepository.saveAll(fetchGames(d));
+                d -> {
+                    gameRepository.saveAll(fetchGames(d));
                 }
         );
     }
@@ -168,6 +166,31 @@ public class ScheduleService {
             c.setShortName(cs.shortName());
             return conferenceRepository.save(c);
         }
+    }
+
+    public ScheduleStatus getStatus() {
+        long numTeams = teamRepository.count();
+        long numConferences = conferenceRepository.count();
+        List<SeasonStatus> seasons = seasonRepository.findAll().stream().map(s -> {
+            int year = s.getYear();
+            List<ConferenceMapping> mappings = conferenceMappingRepository.findBySeason(s);
+            long seasonTeams = mappings.size();
+            long seasonConferences = mappings.stream().map(ConferenceMapping::getConference).distinct().count();
+            List<Game> games = gameRepository.findBySeasonOrderByDateAsc(s);
+            long seasonGames = games.size();
+            LocalDate first = games.getFirst().getDate();
+            LocalDate last = games.getLast().getDate();
+            LocalDate lastComplete = games.stream().filter(Game::isComplete).map(Game::getDate).toList().getLast();
+            return new SeasonStatus(year, seasonTeams, seasonConferences, seasonGames, first, last, lastComplete);
+        }).toList();
+        return new ScheduleStatus(numTeams, numConferences, seasons);
+    }
+
+    public record ScheduleStatus(long numberOfTeams, long numberOfConferences, List<SeasonStatus> seasons) {
+    }
+
+    public record SeasonStatus(int year, long numberOfTeams, long numberOfConferences, long numberOfGames,
+                               LocalDate firstGameDate, LocalDate lastGameDate, LocalDate lastCompleteGameDate) {
     }
 
 

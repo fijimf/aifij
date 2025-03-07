@@ -249,4 +249,8 @@ public class Game {
     public void setAwayMoneyLine(Integer awayMoneyLine) {
         this.awayMoneyLine = awayMoneyLine;
     }
+
+    public boolean isComplete() {
+        return homeScore != null && awayScore != null && homeScore > 0 && awayScore > 0;
+    }
 }
