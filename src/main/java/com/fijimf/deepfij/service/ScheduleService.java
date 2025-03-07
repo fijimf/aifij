@@ -1,6 +1,7 @@
 package com.fijimf.deepfij.service;
 
 import com.fijimf.deepfij.model.schedule.*;
+import com.fijimf.deepfij.model.scraping.scoreboard.ScoreboardResponse;
 import com.fijimf.deepfij.model.scraping.standings.ConferenceStanding;
 import com.fijimf.deepfij.model.scraping.standings.StandingsEntry;
 import com.fijimf.deepfij.model.scraping.standings.StandingsResponse;
@@ -11,10 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class ScheduleService {
@@ -52,6 +52,57 @@ public class ScheduleService {
         return teamRepository.findAll();
     }
 
+    public List<Game> fetchGames(LocalDate d) {
+        ScoreboardResponse scoreboard = scrapingService.fetchScoreboard(Integer.parseInt(d.format(DateTimeFormatter.ofPattern("yyyyMMdd"))));
+        return scoreboard.sports().stream().flatMap(sport -> {
+            return sport.leagues().stream().flatMap(league -> {
+                return league.events().stream().flatMap(event -> {
+                    Game g = new Game();
+                    g.setDate(event.date().toLocalDate());
+                    g.setEspnId(event.id());
+                    g.setLocation(event.location());
+                    g.setNeutralSite(event.neutralSite());
+
+                    g.setPeriods(event.fullStatus().period());
+                    event.competitors().forEach(competitor -> {
+                        if (competitor.homeAway().equals("home")) {
+                            teamRepository.findByEspnId(competitor.id()).stream().findFirst().ifPresentOrElse(t -> {
+                                g.setHomeTeam(t);
+                                g.setHomeScore(Integer.parseInt(competitor.score()));
+                                g.setHomeTeamSeed(competitor.tournamentMatchup().seed());
+                            }, () -> {
+                                logger.error("Team " + competitor.name() + " not found in database");
+                            });
+                        } else if (competitor.homeAway().equals("away")) {
+                            teamRepository.findByEspnId(competitor.id()).stream().findFirst().ifPresentOrElse(t -> {
+                                g.setAwayTeam(t);
+                                g.setAwayScore(Integer.parseInt(competitor.score()));
+                                g.setAwayTeamSeed(competitor.tournamentMatchup().seed());
+                            }, () -> {
+                                logger.error("Team " + competitor.name() + " not found in database");
+                            });
+                        } else {
+                            // Should not be here
+                        }
+                    });
+                    g.setOverUnder(event.odds().overUnder());
+                    g.setSpread(event.odds().spread());
+                    g.setAwayMoneyLine(event.odds().away().moneyLine());
+                    g.setHomeMoneyLine(event.odds().home().moneyLine());
+                    if (g.getHomeTeam() != null && g.getAwayTeam() != null) {
+                        return Stream.of(g);
+                    } else {
+                        return Stream.empty();
+                    }
+                });
+
+
+            });
+        }).toList();
+
+    }
+
+
     public Season findOrCreate(int yyyy) {
         List<Season> seasonList = seasonRepository.findByYear(yyyy);
         if (!seasonList.isEmpty()) return seasonList.getFirst();
@@ -66,7 +117,10 @@ public class ScheduleService {
         }
     }
 
-    public Schedule createSchedule(int yyyy) {
+    public void createSchedule(int yyyy) {
+        if (teamRepository.count() == 0) loadTeams();
+        if (conferenceRepository.count() == 0) loadConferences();
+
         Season s = findOrCreate(yyyy);
 
         StandingsResponse standingsResponse = scrapingService.fetchStandings(yyyy);
@@ -74,7 +128,7 @@ public class ScheduleService {
         standingsResponse.children().forEach(cs -> {
             Conference c = findOrCreateConference(cs);
             cs.consolidatedStandings().forEach(se -> {
-                Team t=findOrCreateTeam(se);
+                Team t = findOrCreateTeam(se);
                 ConferenceMapping mapping = new ConferenceMapping();
                 mapping.setSeason(s);
                 mapping.setConference(c);
@@ -83,13 +137,18 @@ public class ScheduleService {
             });
         });
 
-        return null;
+        logger.info("For " + yyyy + " there are " + conferenceMappingRepository.count() + " teams");
 
+        Stream.iterate(s.getStartDate(), date -> !date.isAfter(s.getEndDate()), date -> date.plusDays(1)).forEach(
+                d->{
+                   gameRepository.saveAll(fetchGames(d));
+                }
+        );
     }
 
     private Team findOrCreateTeam(StandingsEntry se) {
         List<Team> teams = teamRepository.findByEspnId(se.rawTeam().id());
-        if (!teams.isEmpty()){
+        if (!teams.isEmpty()) {
             return teams.getFirst();
         } else {
             return teamRepository.save(se.rawTeam().getTeam());

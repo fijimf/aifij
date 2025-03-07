@@ -46,6 +46,7 @@ CREATE TABLE conference_mapping (
 
 CREATE TABLE game (
     id SERIAL PRIMARY KEY,
+    espn_id VARCHAR(20) NOT NULL,
     season_id BIGINT NOT NULL REFERENCES season(id),
     date DATE NOT NULL,
     time TIME,
@@ -54,13 +55,16 @@ CREATE TABLE game (
     home_score INTEGER,
     away_score INTEGER,
     status VARCHAR(20),
-    venue VARCHAR(100),
-    city VARCHAR(100),
-    state VARCHAR(2),
+    periods INTEGER,
+    location VARCHAR(100),
     neutral_site BOOLEAN DEFAULT FALSE,
-    conference_game BOOLEAN DEFAULT FALSE,
-    tournament_game BOOLEAN DEFAULT FALSE,
-    tournament_name VARCHAR(100),
+    home_team_seed INTEGER,
+    away_team_seed INTEGER,
+    spread FLOAT,
+    over_under FLOAT,
+    home_money_line INTEGER,
+    away_money_ine INTEGER
+
     CONSTRAINT game_teams_different CHECK (home_team_id != away_team_id)
 );
 

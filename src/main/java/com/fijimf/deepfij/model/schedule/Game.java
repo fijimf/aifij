@@ -28,6 +28,10 @@ public class Game {
     private Season season;
 
     @NotNull
+    @Column(name = "espn_id", nullable = false)
+    private String espnId;
+    
+    @NotNull
     @Column(name = "date", nullable = false)
     private LocalDate date;
 
@@ -54,33 +58,43 @@ public class Game {
     @Column(name = "status")
     private String status;
 
-    @Size(max = 100)
-    @Column(name = "venue")
-    private String venue;
+    @Column(name = "periods")
+    private Integer periods;
 
     @Size(max = 100)
-    @Column(name = "city")
-    private String city;
-
-    @Size(max = 2)
-    @Column(name = "state")
-    private String state;
+    @Column(name = "location")
+    private String location;
 
     @Column(name = "neutral_site")
     private Boolean neutralSite = false;
 
-    @Column(name = "conference_game")
-    private Boolean conferenceGame = false;
+    @Column(name = "home_team_seed")
+    private Integer homeTeamSeed;
 
-    @Column(name = "tournament_game")
-    private Boolean tournamentGame = false;
+    @Column(name = "away_team_seed")
+    private Integer awayTeamSeed;
 
-    @Size(max = 100)
-    @Column(name = "tournament_name")
-    private String tournamentName;
+    @Column(name = "spread")
+    private Double spread;
+
+    @Column(name = "over_under")
+    private Double overUnder;
+
+    @Column(name = "home_money_line")
+    private Integer homeMoneyLine;
+
+    @Column(name = "away_money_line")
+    private Integer awayMoneyLine;
 
     // Default constructor
     public Game() {
+    }
+
+    // Enforce hame_team_id != away_team_id
+    public void validateGameTeams() {
+        if (homeTeam.equals(awayTeam)) {
+            throw new IllegalArgumentException("Home team and away team must be different");
+        }
     }
 
     // Getters and setters
@@ -90,6 +104,14 @@ public class Game {
 
     public void setId(Long id) {
         this.id = id;
+    }
+    
+    public String getEspnId() {
+        return espnId;
+    }
+    
+    public void setEspnId(String espnId) {
+        this.espnId = espnId;
     }
 
     public Season getSeason() {
@@ -156,28 +178,20 @@ public class Game {
         this.status = status;
     }
 
-    public String getVenue() {
-        return venue;
+    public Integer getPeriods() {
+        return periods;
     }
 
-    public void setVenue(String venue) {
-        this.venue = venue;
+    public void setPeriods(Integer periods) {
+        this.periods = periods;
     }
 
-    public String getCity() {
-        return city;
+    public String getLocation() {
+        return location;
     }
 
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getState() {
-        return state;
-    }
-
-    public void setState(String state) {
-        this.state = state;
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public Boolean getNeutralSite() {
@@ -188,27 +202,51 @@ public class Game {
         this.neutralSite = neutralSite;
     }
 
-    public Boolean getConferenceGame() {
-        return conferenceGame;
+    public Integer getHomeTeamSeed() {
+        return homeTeamSeed;
     }
 
-    public void setConferenceGame(Boolean conferenceGame) {
-        this.conferenceGame = conferenceGame;
+    public void setHomeTeamSeed(Integer homeTeamSeed) {
+        this.homeTeamSeed = homeTeamSeed;
     }
 
-    public Boolean getTournamentGame() {
-        return tournamentGame;
+    public Integer getAwayTeamSeed() {
+        return awayTeamSeed;
     }
 
-    public void setTournamentGame(Boolean tournamentGame) {
-        this.tournamentGame = tournamentGame;
+    public void setAwayTeamSeed(Integer awayTeamSeed) {
+        this.awayTeamSeed = awayTeamSeed;
     }
 
-    public String getTournamentName() {
-        return tournamentName;
+    public Double getSpread() {
+        return spread;
     }
 
-    public void setTournamentName(String tournamentName) {
-        this.tournamentName = tournamentName;
+    public void setSpread(Double spread) {
+        this.spread = spread;
     }
-} 
+
+    public Double getOverUnder() {
+        return overUnder;
+    }
+
+    public void setOverUnder(Double overUnder) {
+        this.overUnder = overUnder;
+    }
+
+    public Integer getHomeMoneyLine() {
+        return homeMoneyLine;
+    }
+
+    public void setHomeMoneyLine(Integer homeMoneyLine) {
+        this.homeMoneyLine = homeMoneyLine;
+    }
+
+    public Integer getAwayMoneyLine() {
+        return awayMoneyLine;
+    }
+
+    public void setAwayMoneyLine(Integer awayMoneyLine) {
+        this.awayMoneyLine = awayMoneyLine;
+    }
+}
