@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface ConferenceMappingRepository extends JpaRepository<ConferenceMapping, Long> {
     List<ConferenceMapping> findBySeason(Season season);
+
+    long deleteBySeason(Season s);
 }

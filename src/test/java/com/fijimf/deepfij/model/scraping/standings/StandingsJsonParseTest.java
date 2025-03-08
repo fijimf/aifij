@@ -55,5 +55,9 @@ public class StandingsJsonParseTest {
         assertThat(child.abbreviation()).isNotNull();
         assertThat(child.consolidatedStandings()).isNotNull();
         assertThat(child.consolidatedStandings()).hasSizeGreaterThanOrEqualTo(1);
+        child.consolidatedStandings().forEach(standings -> {
+            assertThat(standings.rawTeam()).isNotNull();
+            assertThat(standings.rawTeam().id()).isNotNull();
+        });
     }
 }

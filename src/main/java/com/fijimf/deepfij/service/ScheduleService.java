@@ -143,7 +143,8 @@ public class ScheduleService {
         if (conferenceRepository.count() == 0) loadConferences();
 
         Season s = findOrCreate(yyyy);
-
+        long mappingsDeleted = conferenceMappingRepository.deleteBySeason(s);
+        logger.info("Deleted " + mappingsDeleted + " mappings for season " + s.getName());
         StandingsResponse standingsResponse = scrapingService.fetchStandings(yyyy);
 
         standingsResponse.children().forEach(cs -> {
