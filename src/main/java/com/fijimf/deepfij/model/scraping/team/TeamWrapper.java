@@ -12,6 +12,10 @@ public record TeamWrapper(@JsonProperty("team") RawTeam rawTeam) {
         return this.rawTeam.getTeam();
     }
 
+    public void updateTeam(Team team){
+        this.rawTeam.updateTeam(team);
+    }
+
 
 }
 

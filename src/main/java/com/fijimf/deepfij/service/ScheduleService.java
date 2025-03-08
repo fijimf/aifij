@@ -1,6 +1,7 @@
 package com.fijimf.deepfij.service;
 
 import com.fijimf.deepfij.model.schedule.*;
+import com.fijimf.deepfij.model.scraping.conference.RawConference;
 import com.fijimf.deepfij.model.scraping.scoreboard.ScoreboardResponse;
 import com.fijimf.deepfij.model.scraping.standings.ConferenceStanding;
 import com.fijimf.deepfij.model.scraping.standings.StandingsEntry;
@@ -36,7 +37,21 @@ public class ScheduleService {
     }
 
     public List<Conference> loadConferences() {
-        scrapingService.fetchConferences().forEach(c -> conferenceRepository.save(c.toConference()));
+        scrapingService.fetchConferences()
+                .stream()
+                .filter(RawConference::isConference)
+                .forEach(c -> {
+                    List<Conference> conferenceList = conferenceRepository.findByEspnId(c.groupId());
+                    if (conferenceList.isEmpty()) {
+                        conferenceRepository.save(c.toConference());
+                        logger.info("Conference " + c.name() + " inserted from ESPN");
+                    } else {
+                        Conference conference = conferenceList.getFirst();
+                        c.updateConference(conference);
+                        conferenceRepository.save(conference);
+                        logger.info("Conference " + conference.getName() + " updated from ESPN");
+                    }
+                });
         return conferenceRepository.findAll();
     }
 
@@ -47,7 +62,15 @@ public class ScheduleService {
                 .getFirst()
                 .teams()
                 .forEach(w -> {
-                    teamRepository.save(w.toTeam());
+                    List<Team> teams = teamRepository.findByEspnId(w.rawTeam().id());
+                    if (teams.isEmpty()) {
+                        teamRepository.save(w.rawTeam().getTeam());
+                        logger.info("Team " + w.rawTeam().name() + " inserted from ESPN");
+                    } else {
+                        Team t = teams.getFirst();
+                        w.updateTeam(t);
+                        teamRepository.save(t);
+                    }
                 });
         return teamRepository.findAll();
     }

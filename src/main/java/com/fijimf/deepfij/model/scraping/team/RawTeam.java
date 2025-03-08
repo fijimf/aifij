@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fijimf.deepfij.model.schedule.Team;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 // Represents a Team (individual teams inside leagues)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -28,14 +29,36 @@ public record RawTeam(
         Team team = new Team();
         team.setId(0L);
         team.setEspnId(this.id());
-        team.setPrimaryColor(this.primaryColor());
-        team.setSecondaryColor( this.alternateColor());
+        team.setPrimaryColor(fixColor(this.primaryColor()));
+        team.setSecondaryColor(fixColor(this.alternateColor()));
         team.setAbbreviation(this.abbreviation());
         team.setNickname(this.name());
         team.setName(this.nickname());
         team.setLongName(this.location());
         team.setSlug(this.slug());
-        this.logos().stream().filter(l->l.rel().contains("primary_logo_on_white_color")).forEach(l->team.setLogoUrl(l.href()));
+        this.logos().stream().filter(l -> l.rel().contains("primary_logo_on_white_color")).forEach(l -> team.setLogoUrl(l.href()));
         return team;
+    }
+
+    public void updateTeam(Team team) {
+        team.setEspnId(this.id());
+        team.setPrimaryColor(fixColor(this.primaryColor()));
+        team.setSecondaryColor(fixColor(this.alternateColor()));
+        team.setAbbreviation(this.abbreviation());
+        team.setNickname(this.name());
+        team.setName(this.nickname());
+        team.setLongName(this.location());
+        team.setSlug(this.slug());
+        this.logos().stream().filter(l -> l.rel().contains("primary_logo_on_white_color")).forEach(l -> team.setLogoUrl(l.href()));
+    }
+
+    public static String fixColor(String color) {
+        Pattern p = Pattern.compile("^[A-Fa-f0-9]{6}$");
+        if (color==null) return null;
+        if (p.matcher(color).matches()) {
+            return "#"+color;
+        } else {
+            return null;
+        }
     }
 }
