@@ -35,7 +35,11 @@ public record RawTeam(
         team.setNickname(this.name());
         team.setName(this.nickname());
         team.setLongName(this.location());
-        team.setSlug(this.slug());
+        if (this.slug() == null || this.slug().isBlank()) {
+            team.setSlug(makeSlug(this.displayName()));
+        } else {
+            team.setSlug(this.slug());
+        }
         this.logos().stream().filter(l -> l.rel().contains("primary_logo_on_white_color")).forEach(l -> team.setLogoUrl(l.href()));
         return team;
     }
@@ -48,17 +52,27 @@ public record RawTeam(
         team.setNickname(this.name());
         team.setName(this.nickname());
         team.setLongName(this.location());
-        team.setSlug(this.slug());
+        if (this.slug() == null || this.slug().isBlank()) {
+            team.setSlug(makeSlug(this.displayName()));
+        } else {
+            team.setSlug(this.slug());
+        }
         this.logos().stream().filter(l -> l.rel().contains("primary_logo_on_white_color")).forEach(l -> team.setLogoUrl(l.href()));
     }
 
     public static String fixColor(String color) {
         Pattern p = Pattern.compile("^[A-Fa-f0-9]{6}$");
-        if (color==null) return null;
+        if (color == null) return null;
         if (p.matcher(color).matches()) {
-            return "#"+color;
+            return "#" + color;
         } else {
             return null;
         }
+    }
+
+    public static String makeSlug(String name) {
+        return name.toLowerCase()
+                .replaceAll("[^a-z /-]+", "")
+                .replaceAll(" ", "-");
     }
 }

@@ -1,12 +1,18 @@
 package com.fijimf.deepfij.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fijimf.deepfij.model.schedule.*;
 import com.fijimf.deepfij.model.scraping.conference.RawConference;
 import com.fijimf.deepfij.model.scraping.scoreboard.ScoreboardResponse;
 import com.fijimf.deepfij.model.scraping.standings.ConferenceStanding;
 import com.fijimf.deepfij.model.scraping.standings.StandingsEntry;
 import com.fijimf.deepfij.model.scraping.standings.StandingsResponse;
+import com.fijimf.deepfij.model.scraping.team.RawTeam;
 import com.fijimf.deepfij.repo.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,15 +31,20 @@ public class ScheduleService {
     private final ConferenceMappingRepository conferenceMappingRepository;
     private final GameRepository gameRepository;
     private final SeasonRepository seasonRepository;
+
+    @PersistenceContext
+    private final EntityManager entityManager; // Direct access to handle flushing
+
     private static final Logger logger = LoggerFactory.getLogger(ScheduleService.class);
 
-    public ScheduleService(@Autowired ScrapingService scrapingService, @Autowired TeamRepository teamRepository, @Autowired ConferenceRepository conferenceRepository, @Autowired ConferenceMappingRepository conferenceMappingRepository, @Autowired GameRepository gameRepository, @Autowired SeasonRepository seasonRepository) {
+    public ScheduleService(@Autowired ScrapingService scrapingService, @Autowired TeamRepository teamRepository, @Autowired ConferenceRepository conferenceRepository, @Autowired ConferenceMappingRepository conferenceMappingRepository, @Autowired GameRepository gameRepository, @Autowired SeasonRepository seasonRepository, @Autowired EntityManager entityManager) {
         this.scrapingService = scrapingService;
         this.teamRepository = teamRepository;
         this.conferenceRepository = conferenceRepository;
         this.conferenceMappingRepository = conferenceMappingRepository;
         this.gameRepository = gameRepository;
         this.seasonRepository = seasonRepository;
+        this.entityManager = entityManager;
     }
 
     public List<Conference> loadConferences() {
@@ -138,12 +149,15 @@ public class ScheduleService {
         }
     }
 
+    @Transactional
     public void createSchedule(int yyyy) {
         if (teamRepository.count() == 0) loadTeams();
         if (conferenceRepository.count() == 0) loadConferences();
 
         Season s = findOrCreate(yyyy);
         long mappingsDeleted = conferenceMappingRepository.deleteBySeason(s);
+        entityManager.flush();
+
         logger.info("Deleted " + mappingsDeleted + " mappings for season " + s.getName());
         StandingsResponse standingsResponse = scrapingService.fetchStandings(yyyy);
 
@@ -155,6 +169,7 @@ public class ScheduleService {
                 mapping.setSeason(s);
                 mapping.setConference(c);
                 mapping.setTeam(t);
+                logger.info("Mapping team " + t.getName() + " to conference " + c.getName() + " in season " + s.getName());
                 conferenceMappingRepository.save(mapping);
             });
         });
@@ -173,6 +188,17 @@ public class ScheduleService {
         if (!teams.isEmpty()) {
             return teams.getFirst();
         } else {
+            logger.info("Team " + se.rawTeam().name() + " is not a known team.  Retrieving by ID");
+            RawTeam rawTeam = scrapingService.fetchTeamById(se.rawTeam().id());
+            if (rawTeam != null) {
+              return teamRepository.save(rawTeam.getTeam());
+            }
+            ObjectMapper mapper = new ObjectMapper();
+            try {
+                logger.info(mapper.writer().withDefaultPrettyPrinter().writeValueAsString(se.rawTeam()));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
             return teamRepository.save(se.rawTeam().getTeam());
         }
     }

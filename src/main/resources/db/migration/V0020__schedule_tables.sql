@@ -63,7 +63,7 @@ CREATE TABLE game (
     spread FLOAT,
     over_under FLOAT,
     home_money_line INTEGER,
-    away_money_ine INTEGER
+    away_money_line INTEGER
 
     CONSTRAINT game_teams_different CHECK (home_team_id != away_team_id)
 );
