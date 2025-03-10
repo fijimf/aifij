@@ -1,5 +1,6 @@
 package com.fijimf.deepfij.model.scraping.scoreboard;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -16,4 +17,8 @@ public record League(
     boolean isTournament,
     List<String> smartdates,
     List<Event> events
-) {} 
+) {
+    public List<Event> eventList() {
+        if (events == null) {return Collections.emptyList(); } else { return events;}
+    }
+}

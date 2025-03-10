@@ -20,7 +20,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -86,51 +90,79 @@ public class ScheduleService {
         return teamRepository.findAll();
     }
 
-    public List<Game> fetchGames(LocalDate d) {
-        ScoreboardResponse scoreboard = scrapingService.fetchScoreboard(Integer.parseInt(d.format(DateTimeFormatter.ofPattern("yyyyMMdd"))));
-        return scoreboard.sports().stream().flatMap(sport -> {
-            return sport.leagues().stream().flatMap(league -> {
-                return league.events().stream().flatMap(event -> {
-                    Game g = new Game();
-                    g.setDate(event.date().toLocalDate());
-                    g.setEspnId(event.id());
-                    g.setLocation(event.location());
-                    g.setNeutralSite(event.neutralSite());
+    public List<Game> fetchGames(LocalDate d, Season season) {
 
-                    g.setPeriods(event.fullStatus().period());
-                    event.competitors().forEach(competitor -> {
-                        if (competitor.homeAway().equals("home")) {
-                            teamRepository.findByEspnId(competitor.id()).stream().findFirst().ifPresentOrElse(t -> {
-                                g.setHomeTeam(t);
-                                g.setHomeScore(Integer.parseInt(competitor.score()));
-                                g.setHomeTeamSeed(competitor.tournamentMatchup().seed());
-                            }, () -> {
-                                logger.error("Team " + competitor.name() + " not found in database");
-                            });
-                        } else if (competitor.homeAway().equals("away")) {
-                            teamRepository.findByEspnId(competitor.id()).stream().findFirst().ifPresentOrElse(t -> {
-                                g.setAwayTeam(t);
-                                g.setAwayScore(Integer.parseInt(competitor.score()));
-                                g.setAwayTeamSeed(competitor.tournamentMatchup().seed());
-                            }, () -> {
-                                logger.error("Team " + competitor.name() + " not found in database");
-                            });
-                        } else {
-                            // Should not be here
+        logger.info("Fetching games for " + d);
+        ScoreboardResponse scoreboard = scrapingService.fetchScoreboard(Integer.parseInt(d.format(DateTimeFormatter.ofPattern("yyyyMMdd"))));
+        if (scoreboard == null) {
+            logger.error("Scoreboard for date " + d.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + " is null");
+            return Collections.emptyList();
+        }
+
+        Map<String, Team> teams = conferenceMappingRepository
+                .findBySeason(season).stream()
+                .map(ConferenceMapping::getTeam)
+                .collect(Collectors.toMap(Team::getEspnId, Function.identity()));
+        logger.info("Scraped "+scoreboard.events().size()+" events for date "+d);
+
+        List<Game> games = scoreboard.events().stream().flatMap(event -> {
+            Game g = new Game();
+            g.setSeason(season);
+            g.setDate(event.date().toLocalDate());
+            g.setEspnId(event.id());
+            g.setLocation(event.location());
+            g.setNeutralSite(event.neutralSite());
+
+            g.setPeriods(event.fullStatus().period());
+            event.competitors().forEach(competitor -> {
+                if (competitor.homeAway().equals("home")) {
+                    if (teams.containsKey(competitor.id())) {
+                        Team t = teams.get(competitor.id());
+                        g.setHomeTeam(t);
+                        if (competitor.score() != null && !competitor.score().isBlank()) {
+                            g.setHomeScore(Integer.parseInt(competitor.score()));
                         }
-                    });
-                    g.setOverUnder(event.odds().overUnder());
-                    g.setSpread(event.odds().spread());
-                    g.setAwayMoneyLine(event.odds().away().moneyLine());
-                    g.setHomeMoneyLine(event.odds().home().moneyLine());
-                    if (g.getHomeTeam() != null && g.getAwayTeam() != null) {
-                        return Stream.of(g);
+                        if (competitor.tournamentMatchup() != null) {
+                            g.setHomeTeamSeed(competitor.tournamentMatchup().seed());
+                        }
                     } else {
-                        return Stream.empty();
+                        logger.error("Team " + competitor.name() + " not found in database");
                     }
-                });
+                } else if (competitor.homeAway().equals("away")) {
+                    if (teams.containsKey(competitor.id())) {
+                        Team t = teams.get(competitor.id());
+                        g.setAwayTeam(t);
+                        if (competitor.score() != null && !competitor.score().isBlank()) {
+                            g.setAwayScore(Integer.parseInt(competitor.score()));
+                        }
+                        if (competitor.tournamentMatchup() != null) {
+                            g.setAwayTeamSeed(competitor.tournamentMatchup().seed());
+                        }
+                    } else {
+                        logger.error("Team " + competitor.name() + " not found in database");
+                    }
+                } else {
+                    // Should not be here
+                }
             });
+            if (event.odds() != null) {
+                g.setOverUnder(event.odds().overUnder());
+                g.setSpread(event.odds().spread());
+                if (event.odds().away() != null)
+                    g.setAwayMoneyLine(event.odds().away().moneyLine());
+                if (event.odds().home() != null)
+                    g.setHomeMoneyLine(event.odds().home().moneyLine());
+            }
+            if (g.getHomeTeam() != null && g.getAwayTeam() != null) {
+                return Stream.of(g);
+            } else {
+                logger.error("Game " + event.name() + " has missing teams.");
+                return Stream.empty();
+            }
         }).toList();
+
+        logger.info("Converted "+games.size()+" games for date "+d);
+        return games;
 
     }
 
@@ -178,9 +210,34 @@ public class ScheduleService {
 
         Stream.iterate(s.getStartDate(), date -> !date.isAfter(s.getEndDate()), date -> date.plusDays(1)).forEach(
                 d -> {
-                    gameRepository.saveAll(fetchGames(d));
+                    List<Game> games = fetchGames(d, s);
+
+                    updateGames(d, s, games);
                 }
         );
+    }
+
+    private void updateGames(LocalDate d, Season s, List<Game> games) {
+        logger.info("For date " + d + " " + games.size() + " were scraped");
+        Map<String, Game> oldGames = gameRepository.findBySeasonAndDate(s, d).stream().collect(Collectors.toMap(Game::getEspnId, Function.identity()));
+        games.forEach(g -> {
+            if (oldGames.containsKey(g.getEspnId())) {
+                Game oldGame = oldGames.get(g.getEspnId());
+                Game updatedGame = Game.update(oldGame, g);
+                if (updatedGame != null) gameRepository.save(updatedGame);
+            } else {
+                gameRepository.save(g);
+            }
+        });
+        //Delete missing games
+        oldGames.keySet().stream().filter(k -> !games.stream().map(Game::getEspnId).toList().contains(k)).forEach(k -> {
+            Game game = oldGames.get(k);
+            gameRepository.delete(game);
+        });
+        logger.info("For " + d + " there are " + gameRepository.findBySeasonAndDate(s, d).size() + " games");
+        if (d.isEqual(s.getEndDate())) {
+            logger.info("For " + d + " there are " + gameRepository.findBySeasonAndDate(s, d).stream().filter(Game::isComplete).count() + " complete games");
+        }
     }
 
     private Team findOrCreateTeam(StandingsEntry se) {
@@ -191,7 +248,7 @@ public class ScheduleService {
             logger.info("Team " + se.rawTeam().name() + " is not a known team.  Retrieving by ID");
             RawTeam rawTeam = scrapingService.fetchTeamById(se.rawTeam().id());
             if (rawTeam != null) {
-              return teamRepository.save(rawTeam.getTeam());
+                return teamRepository.save(rawTeam.getTeam());
             }
             ObjectMapper mapper = new ObjectMapper();
             try {
@@ -234,6 +291,10 @@ public class ScheduleService {
             return new SeasonStatus(year, seasonTeams, seasonConferences, seasonGames, first, last, lastComplete);
         }).toList();
         return new ScheduleStatus(numTeams, numConferences, seasons);
+    }
+
+    public List<Game> fetchGames(int seasonYear, LocalDate localDate) {
+        return fetchGames(localDate, seasonRepository.findByYear(seasonYear).getFirst());
     }
 
     public record ScheduleStatus(long numberOfTeams, long numberOfConferences, List<SeasonStatus> seasons) {

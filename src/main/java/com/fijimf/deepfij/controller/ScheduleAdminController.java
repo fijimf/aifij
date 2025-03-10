@@ -49,10 +49,10 @@ public class ScheduleAdminController {
     }
 
     @GetMapping("/loadGames")
-    public ResponseEntity<List<Game>> fetchGames(@RequestParam String seasonYear, @RequestParam String date) {
+    public ResponseEntity<List<Game>> fetchGames(@RequestParam int seasonYear, @RequestParam String date) {
         // Parse the date string into LocalDate
         LocalDate localDate = LocalDate.parse(date);
-        List<Game> games = scheduleService.fetchGames(localDate);
+        List<Game> games = scheduleService.fetchGames(seasonYear, localDate);
         return ResponseEntity.ok(games);
     }
 

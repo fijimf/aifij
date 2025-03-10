@@ -1,10 +1,8 @@
 package com.fijimf.deepfij.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fijimf.deepfij.model.schedule.Conference;
-import com.fijimf.deepfij.model.schedule.Team;
-import com.fijimf.deepfij.model.scraping.conference.RawConference;
 import com.fijimf.deepfij.model.scraping.conference.ConferenceResponse;
+import com.fijimf.deepfij.model.scraping.conference.RawConference;
 import com.fijimf.deepfij.model.scraping.scoreboard.ScoreboardResponse;
 import com.fijimf.deepfij.model.scraping.standings.StandingsResponse;
 import com.fijimf.deepfij.model.scraping.team.RawTeam;
@@ -13,6 +11,8 @@ import com.fijimf.deepfij.model.scraping.team.SportsResponse;
 import com.fijimf.deepfij.model.scraping.team.TeamWrapper;
 import com.fijimf.deepfij.repo.ConferenceRepository;
 import com.fijimf.deepfij.repo.TeamRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +25,7 @@ import java.util.List;
 
 @Component
 public class ScrapingService {
-
+    public static final Logger logger = LoggerFactory.getLogger(ScrapingService.class);
     private final TeamRepository teamRepo;
     private final ConferenceRepository conferenceRepo;
     private static final String CONFERENCES_API_URL = "https://site.web.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard/conferences";
@@ -120,7 +120,6 @@ public class ScrapingService {
     }
 
 
-
     public StandingsResponse fetchStandings(int year) {
         HttpClient httpClient = HttpClient.newHttpClient();
 
@@ -163,10 +162,12 @@ public class ScrapingService {
 
                 return scoreboardResponse;
             } else {
-                throw new RuntimeException("Failed to fetch scoreboard data. HTTP status code: " + response.statusCode());
+                logger.warn("Failed to fetch scoreboard data. HTTP status code: " + response.statusCode());
+                return null;
             }
         } catch (Exception e) {
-            throw new RuntimeException("Error occurred while trying to fetch scoreboard from ESPN: " + e.getMessage(), e);
+            logger.warn("Error occurred while trying to fetch scoreboard from ESPN: " + e.getMessage(), e);
+            return null;
         }
     }
 

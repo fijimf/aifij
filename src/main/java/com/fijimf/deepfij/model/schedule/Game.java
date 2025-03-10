@@ -1,19 +1,12 @@
 package com.fijimf.deepfij.model.schedule;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Objects;
 
 @Entity
 @Table(name = "game")
@@ -30,7 +23,7 @@ public class Game {
     @NotNull
     @Column(name = "espn_id", nullable = false)
     private String espnId;
-    
+
     @NotNull
     @Column(name = "date", nullable = false)
     private LocalDate date;
@@ -105,11 +98,11 @@ public class Game {
     public void setId(Long id) {
         this.id = id;
     }
-    
+
     public String getEspnId() {
         return espnId;
     }
-    
+
     public void setEspnId(String espnId) {
         this.espnId = espnId;
     }
@@ -253,4 +246,70 @@ public class Game {
     public boolean isComplete() {
         return homeScore != null && awayScore != null && homeScore > 0 && awayScore > 0;
     }
+
+    public static Game update(Game fromDb, Game scrapeGame) {
+        if (fromDb == null) {
+            throw new IllegalArgumentException("Cannot copy from null Game");
+        }
+        boolean needsUpdate = false;
+
+        if (fromDb.time != scrapeGame.time) {
+            fromDb.time = scrapeGame.time;
+            needsUpdate = true;
+        }
+        if (!Objects.equals(fromDb.homeScore, scrapeGame.homeScore)) {
+            fromDb.homeScore = scrapeGame.homeScore;
+            needsUpdate = true;
+        }
+        if (!Objects.equals(fromDb.awayScore, scrapeGame.awayScore)) {
+            fromDb.awayScore = scrapeGame.awayScore;
+            needsUpdate = true;
+        }
+        if (!Objects.equals(fromDb.status, scrapeGame.status)) {
+            fromDb.status = scrapeGame.status;
+            needsUpdate = true;
+        }
+        if (!Objects.equals(fromDb.periods, scrapeGame.periods)) {
+            fromDb.periods = scrapeGame.periods;
+            needsUpdate = true;
+        }
+        if (!Objects.equals(fromDb.location, scrapeGame.location)) {
+            fromDb.location = scrapeGame.location;
+            needsUpdate = true;
+        }
+        if (fromDb.neutralSite != scrapeGame.neutralSite) {
+            fromDb.neutralSite = scrapeGame.neutralSite;
+            needsUpdate = true;
+        }
+        if (!Objects.equals(fromDb.homeTeamSeed, scrapeGame.homeTeamSeed)) {
+            fromDb.homeTeamSeed = scrapeGame.homeTeamSeed;
+            needsUpdate = true;
+        }
+        if (!Objects.equals(fromDb.awayTeamSeed, scrapeGame.awayTeamSeed)) {
+            fromDb.awayTeamSeed = scrapeGame.awayTeamSeed;
+            needsUpdate = true;
+        }
+        if (!Objects.equals(fromDb.spread, scrapeGame.spread)) {
+            fromDb.spread = scrapeGame.spread;
+            needsUpdate = true;
+        }
+        if (!Objects.equals(fromDb.overUnder, scrapeGame.overUnder)) {
+            fromDb.overUnder = scrapeGame.overUnder;
+            needsUpdate = true;
+        }
+        if (!Objects.equals(fromDb.homeMoneyLine, scrapeGame.homeMoneyLine)) {
+            fromDb.homeMoneyLine = scrapeGame.homeMoneyLine;
+            needsUpdate = true;
+        }
+        if (!Objects.equals(fromDb.awayMoneyLine, scrapeGame.awayMoneyLine)) {
+            fromDb.awayMoneyLine = scrapeGame.awayMoneyLine;
+            needsUpdate = true;
+        }
+        if (needsUpdate) {
+            return fromDb;
+        } else {
+            return null;
+        }
+    }
+
 }
