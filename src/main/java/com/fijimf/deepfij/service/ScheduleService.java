@@ -19,10 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -90,12 +89,12 @@ public class ScheduleService {
         return teamRepository.findAll();
     }
 
-    public List<Game> fetchGames(LocalDate d, Season season) {
+    public List<Game> fetchGames(LocalDate index, Season season) {
 
-        logger.info("Fetching games for " + d);
-        ScoreboardResponse scoreboard = scrapingService.fetchScoreboard(Integer.parseInt(d.format(DateTimeFormatter.ofPattern("yyyyMMdd"))));
+        logger.info("Fetching games for " + index);
+        ScoreboardResponse scoreboard = scrapingService.fetchScoreboard(Integer.parseInt(index.format(DateTimeFormatter.ofPattern("yyyyMMdd"))));
         if (scoreboard == null) {
-            logger.error("Scoreboard for date " + d.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + " is null");
+            logger.error("Scoreboard for index " + index.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + " is null");
             return Collections.emptyList();
         }
 
@@ -103,12 +102,18 @@ public class ScheduleService {
                 .findBySeason(season).stream()
                 .map(ConferenceMapping::getTeam)
                 .collect(Collectors.toMap(Team::getEspnId, Function.identity()));
-        logger.info("Scraped "+scoreboard.events().size()+" events for date "+d);
+        logger.info("Scraped "+scoreboard.events().size()+" events for date "+index);
 
         List<Game> games = scoreboard.events().stream().flatMap(event -> {
             Game g = new Game();
             g.setSeason(season);
-            g.setDate(event.date().toLocalDate());
+            g.setDate(event.date()
+                    .withZoneSameInstant(ZoneId.of("America/New_York"))
+                    .toLocalDate());
+            g.setTime(event.date()
+                    .withZoneSameInstant(ZoneId.of("America/New_York"))
+                    .toLocalTime());
+            g.setIndexDate(index);
             g.setEspnId(event.id());
             g.setLocation(event.location());
             g.setNeutralSite(event.neutralSite());
@@ -141,8 +146,6 @@ public class ScheduleService {
                     } else {
                         logger.error("Team " + competitor.name() + " not found in database");
                     }
-                } else {
-                    // Should not be here
                 }
             });
             if (event.odds() != null) {
@@ -161,7 +164,7 @@ public class ScheduleService {
             }
         }).toList();
 
-        logger.info("Converted "+games.size()+" games for date "+d);
+        logger.info("Converted "+games.size()+" games for date "+index);
         return games;
 
     }
@@ -217,27 +220,31 @@ public class ScheduleService {
         );
     }
 
-    private void updateGames(LocalDate d, Season s, List<Game> games) {
-        logger.info("For date " + d + " " + games.size() + " were scraped");
-        Map<String, Game> oldGames = gameRepository.findBySeasonAndDate(s, d).stream().collect(Collectors.toMap(Game::getEspnId, Function.identity()));
-        games.forEach(g -> {
-            if (oldGames.containsKey(g.getEspnId())) {
-                Game oldGame = oldGames.get(g.getEspnId());
-                Game updatedGame = Game.update(oldGame, g);
-                if (updatedGame != null) gameRepository.save(updatedGame);
-            } else {
-                gameRepository.save(g);
-            }
-        });
-        //Delete missing games
-        oldGames.keySet().stream().filter(k -> !games.stream().map(Game::getEspnId).toList().contains(k)).forEach(k -> {
-            Game game = oldGames.get(k);
-            gameRepository.delete(game);
-        });
-        logger.info("For " + d + " there are " + gameRepository.findBySeasonAndDate(s, d).size() + " games");
-        if (d.isEqual(s.getEndDate())) {
-            logger.info("For " + d + " there are " + gameRepository.findBySeasonAndDate(s, d).stream().filter(Game::isComplete).count() + " complete games");
-        }
+    private void updateGames(LocalDate index, Season s, List<Game> games) {
+        logger.info("For index {} {} were scraped", index, games.size());
+        Map<String, Game> oldGames = gameRepository.findBySeasonAndIndexDate(s, index).stream().collect(Collectors.toMap(Game::getEspnId, Function.identity()));
+        logger.info("For index {} {} were in the DB", index, oldGames.size());
+
+        Map<Boolean, List<Game>> partitionedGames = games
+                .stream()
+                .collect(Collectors.partitioningBy(g -> oldGames.containsKey(g.getEspnId())));
+        List<Game> inserts = partitionedGames.get(false);
+        logger.info("For date " + index + " " + inserts.size() + " were new");
+        List<Game> updates = partitionedGames.get(true);
+        gameRepository.saveAll(inserts);
+        logger.info("For date " + index + " " + updates.size() + " were potentially updated.");
+
+        List<Game> updatedGames =updates.stream().map(g->Game.update(oldGames.get(g.getEspnId()), g)).filter(Objects::nonNull).toList();
+        logger.info("For date " + index + " " + updatedGames.size() + " were actually updated");
+        gameRepository.saveAll(updatedGames);
+
+        Set<String> ids = games.stream().map(Game::getEspnId).collect(Collectors.toSet());
+        List<Game> deleteGames = oldGames.entrySet().stream().filter(e -> !ids.contains(e.getKey())).map(Map.Entry::getValue).toList();
+        gameRepository.deleteAll(deleteGames);
+        logger.info("For date " + index + " " + deleteGames.size() + " were deleted");
+        entityManager.flush();
+
+        logger.info("For index " + index + " there are " + gameRepository.findBySeasonAndIndexDate(s, index).size() + " games");
     }
 
     private Team findOrCreateTeam(StandingsEntry se) {

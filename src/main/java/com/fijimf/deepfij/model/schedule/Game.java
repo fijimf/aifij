@@ -25,6 +25,10 @@ public class Game {
     private String espnId;
 
     @NotNull
+    @Column(name = "index_date", nullable = false)
+    private LocalDate indexDate;
+
+    @NotNull
     @Column(name = "date", nullable = false)
     private LocalDate date;
 
@@ -105,6 +109,14 @@ public class Game {
 
     public void setEspnId(String espnId) {
         this.espnId = espnId;
+    }
+
+    public LocalDate getIndexDate() {
+        return indexDate;
+    }
+
+    public void setIndexDate(LocalDate indexDate) {
+        this.indexDate = indexDate;
     }
 
     public Season getSeason() {
@@ -253,10 +265,16 @@ public class Game {
         }
         boolean needsUpdate = false;
 
-        if (fromDb.time != scrapeGame.time) {
+        if (!Objects.equals(fromDb.time, scrapeGame.time)) {
             fromDb.time = scrapeGame.time;
             needsUpdate = true;
         }
+
+        if (!Objects.equals(fromDb.date, scrapeGame.date)) {
+            fromDb.date = scrapeGame.date;
+            needsUpdate = true;
+        }
+
         if (!Objects.equals(fromDb.homeScore, scrapeGame.homeScore)) {
             fromDb.homeScore = scrapeGame.homeScore;
             needsUpdate = true;

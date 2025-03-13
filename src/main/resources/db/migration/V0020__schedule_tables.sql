@@ -48,6 +48,7 @@ CREATE TABLE game (
     id SERIAL PRIMARY KEY,
     espn_id VARCHAR(20) NOT NULL,
     season_id BIGINT NOT NULL REFERENCES season(id),
+    index_date DATE NOT NULL,
     date DATE NOT NULL,
     time TIME,
     home_team_id BIGINT NOT NULL REFERENCES team(id),
