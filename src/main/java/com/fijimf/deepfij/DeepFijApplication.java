@@ -1,21 +1,18 @@
 package com.fijimf.deepfij;
 
-import com.fijimf.deepfij.model.User;
-import com.fijimf.deepfij.repo.UserRepository;
-import com.fijimf.deepfij.service.UserService;
-import jakarta.validation.constraints.NotNull;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.RandomStringGenerator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import com.fijimf.deepfij.model.User;
+import com.fijimf.deepfij.repo.UserRepository;
+import com.fijimf.deepfij.service.UserService;
+
+import jakarta.validation.constraints.NotNull;
 
 @SpringBootApplication
 public class DeepFijApplication {
@@ -24,7 +21,6 @@ public class DeepFijApplication {
         ConfigurableApplicationContext context = SpringApplication.run(DeepFijApplication.class, args);
         UserService userMgr = context.getBean(UserService.class);
         UserRepository userRepository = context.getBean(UserRepository.class);
-        PasswordEncoder passwordEncoder = context.getBean(PasswordEncoder.class);
         String password = getTempAdminPassword();
         User u = userRepository.findByUsername("admin");
         if (u==null) {
@@ -42,7 +38,7 @@ public class DeepFijApplication {
         if (StringUtils.isNotBlank(p)) {
             return p;
         } else {
-            RandomStringGenerator rsg = new RandomStringGenerator.Builder().withinRange(new char[]{'a', 'z'}).build();
+            RandomStringGenerator rsg = new RandomStringGenerator.Builder().withinRange('a', 'z').build();
             return rsg.generate(6);
         }
     }

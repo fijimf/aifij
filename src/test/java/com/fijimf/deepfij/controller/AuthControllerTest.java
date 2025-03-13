@@ -1,11 +1,21 @@
 package com.fijimf.deepfij.controller;
 
-import com.fijimf.deepfij.auth.util.JwtUtil;
-import com.fijimf.deepfij.service.UserService;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,13 +26,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import com.fijimf.deepfij.auth.util.JwtUtil;
+import com.fijimf.deepfij.service.UserService;
 
 public class AuthControllerTest {
 
@@ -42,6 +47,7 @@ public class AuthControllerTest {
     private AuthController authController;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUp() {
         MockitoAnnotations.openMocks(this);
         authController = new AuthController(authenticationManager, jwtUtil, userDetailsService, userService);
@@ -69,7 +75,9 @@ public class AuthControllerTest {
         verify(jwtUtil).generateToken("testUser");
 
         assertNotNull(response.getBody());
-        assertEquals(expectedToken, response.getBody().get("token"));
+        Map<String, String> body = response.getBody();
+        assertNotNull(body);
+        assertEquals(expectedToken, body.get("token"));
     }
 
     @Test
@@ -137,7 +145,9 @@ public class AuthControllerTest {
         verify(userService).createUser("testUser", "testPassword", List.of("USER"));
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue(response.getBody().containsKey("token"));
+        Map<String, String> body = response.getBody();
+        assertNotNull(body);
+        assertTrue(body.containsKey("token"));
 
     }
 
@@ -153,7 +163,9 @@ public class AuthControllerTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue( response.getBody().containsKey("error"));
+        Map<String, String> body = response.getBody();
+        assertNotNull(body);
+        assertTrue(body.containsKey("error"));
 
     }
     @Test
@@ -170,7 +182,9 @@ public class AuthControllerTest {
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue( response.getBody().containsKey("error"));
+        Map<String, String> body = response.getBody();
+        assertNotNull(body);
+        assertTrue(body.containsKey("error"));
 
     }
 

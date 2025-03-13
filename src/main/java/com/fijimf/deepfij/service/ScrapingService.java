@@ -1,5 +1,17 @@
 package com.fijimf.deepfij.service;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fijimf.deepfij.model.scraping.conference.ConferenceResponse;
 import com.fijimf.deepfij.model.scraping.conference.RawConference;
@@ -9,19 +21,6 @@ import com.fijimf.deepfij.model.scraping.team.RawTeam;
 import com.fijimf.deepfij.model.scraping.team.Sport;
 import com.fijimf.deepfij.model.scraping.team.SportsResponse;
 import com.fijimf.deepfij.model.scraping.team.TeamWrapper;
-import com.fijimf.deepfij.repo.ConferenceRepository;
-import com.fijimf.deepfij.repo.TeamRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.util.List;
 
 @Component
 public class ScrapingService {
@@ -40,7 +39,7 @@ public class ScrapingService {
         try {
             // Sending HTTP GET request
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URL(CONFERENCES_API_URL).toURI())
+                    .uri(URI.create(CONFERENCES_API_URL))
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -55,7 +54,7 @@ public class ScrapingService {
             } else {
                 throw new RuntimeException("Failed to fetch data. HTTP status code: " + response.statusCode());
             }
-        } catch (Exception e) {
+        } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Error occurred while trying to scrap data from ESPN: " + e.getMessage(), e);
         }
     }
@@ -65,7 +64,7 @@ public class ScrapingService {
 
         try {
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URL(TEAMS_API_URL).toURI())
+                    .uri(URI.create(TEAMS_API_URL))
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -78,7 +77,7 @@ public class ScrapingService {
             } else {
                 throw new RuntimeException("Failed to fetch data. HTTP Status: " + response.statusCode());
             }
-        } catch (Exception e) {
+        } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Error fetching teams: " + e.getMessage(), e);
         }
     }
@@ -96,7 +95,7 @@ public class ScrapingService {
 
         try {
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URL(TEAM_API_URL.formatted(p)).toURI())
+                    .uri(URI.create(TEAM_API_URL.formatted(p)))
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -108,7 +107,7 @@ public class ScrapingService {
             } else {
                 throw new RuntimeException("Failed to fetch data. HTTP Status: " + response.statusCode());
             }
-        } catch (Exception e) {
+        } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Error fetching teams: " + e.getMessage(), e);
         }
 
@@ -121,7 +120,7 @@ public class ScrapingService {
         try {
             // Sending HTTP GET request with formatted URL including year
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URL(String.format(STANDINGS_API_URL, year)).toURI())
+                    .uri(URI.create(STANDINGS_API_URL.formatted(year)))
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -134,7 +133,7 @@ public class ScrapingService {
             } else {
                 throw new RuntimeException("Failed to fetch standings data. HTTP status code: " + response.statusCode());
             }
-        } catch (Exception e) {
+        } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Error occurred while trying to fetch standings from ESPN: " + e.getMessage(), e);
         }
     }
@@ -144,7 +143,7 @@ public class ScrapingService {
 
         try {
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URL(String.format(SCOREBOARD_API_URL, date)).toURI())
+                    .uri(URI.create(SCOREBOARD_API_URL.formatted(date)))
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -158,7 +157,7 @@ public class ScrapingService {
                 logger.warn("Failed to fetch scoreboard data. HTTP status code: " + response.statusCode());
                 return null;
             }
-        } catch (Exception e) {
+        } catch (IOException | InterruptedException e) {
             logger.warn("Error occurred while trying to fetch scoreboard from ESPN: " + e.getMessage(), e);
             return null;
         }
