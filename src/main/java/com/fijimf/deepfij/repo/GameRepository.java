@@ -12,7 +12,5 @@ import java.util.List;
 public interface GameRepository extends JpaRepository<Game, Long> {
     List<Game> findBySeasonOrderByDateAsc(Season s);
 
-    List<Game> findBySeasonAndDate(Season s, LocalDate d);
-
     List<Game> findBySeasonAndIndexDate(Season s, LocalDate d);
 }

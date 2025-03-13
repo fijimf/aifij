@@ -87,13 +87,6 @@ public class Game {
     public Game() {
     }
 
-    // Enforce hame_team_id != away_team_id
-    public void validateGameTeams() {
-        if (homeTeam.equals(awayTeam)) {
-            throw new IllegalArgumentException("Home team and away team must be different");
-        }
-    }
-
     // Getters and setters
     public Long getId() {
         return id;
