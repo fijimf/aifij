@@ -4,6 +4,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 
+import com.fijimf.deepfij.model.schedule.Season;
+import com.fijimf.deepfij.model.schedule.Team;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -21,11 +24,13 @@ public class TeamStatistic {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "team_id", nullable = false)
-    private Long teamId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "team_id", nullable = false)
+    private Team team;
 
-    @Column(name = "season_id", nullable = false)
-    private Long seasonId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "season_id", nullable = false)
+    private Season season;
 
     @Column(name = "statistic_date", nullable = false)
     private LocalDate statisticDate;
@@ -53,20 +58,20 @@ public class TeamStatistic {
         this.id = id;
     }
 
-    public Long getTeamId() {
-        return teamId;
+    public Team getTeam() {
+        return team;
     }
 
-    public void setTeamId(Long teamId) {
-        this.teamId = teamId;
+    public void setTeam(Team team) {
+        this.team = team;
     }
 
-    public Long getSeasonId() {
-        return seasonId;
+    public Season getSeason() {
+        return season;
     }
 
-    public void setSeasonId(Long seasonId) {
-        this.seasonId = seasonId;
+    public void setSeason(Season season) {
+        this.season = season;
     }
 
     public LocalDate getStatisticDate() {

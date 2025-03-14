@@ -1,30 +1,44 @@
 package com.fijimf.deepfij.service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fijimf.deepfij.model.schedule.*;
+import com.fijimf.deepfij.model.schedule.Conference;
+import com.fijimf.deepfij.model.schedule.ConferenceMapping;
+import com.fijimf.deepfij.model.schedule.Game;
+import com.fijimf.deepfij.model.schedule.Season;
+import com.fijimf.deepfij.model.schedule.Team;
 import com.fijimf.deepfij.model.scraping.conference.RawConference;
 import com.fijimf.deepfij.model.scraping.scoreboard.ScoreboardResponse;
 import com.fijimf.deepfij.model.scraping.standings.ConferenceStanding;
 import com.fijimf.deepfij.model.scraping.standings.StandingsEntry;
 import com.fijimf.deepfij.model.scraping.standings.StandingsResponse;
 import com.fijimf.deepfij.model.scraping.team.RawTeam;
-import com.fijimf.deepfij.repo.*;
+import com.fijimf.deepfij.repo.ConferenceMappingRepository;
+import com.fijimf.deepfij.repo.ConferenceRepository;
+import com.fijimf.deepfij.repo.GameRepository;
+import com.fijimf.deepfij.repo.SeasonRepository;
+import com.fijimf.deepfij.repo.TeamRepository;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class ScheduleService {
@@ -125,7 +139,7 @@ public class ScheduleService {
                         Team t = teams.get(competitor.id());
                         g.setHomeTeam(t);
                         if (competitor.score() != null && !competitor.score().isBlank()) {
-                            g.setHomeScore(Integer.parseInt(competitor.score()));
+                            g.setHomeScore(Integer.valueOf(competitor.score()));
                         }
                         if (competitor.tournamentMatchup() != null) {
                             g.setHomeTeamSeed(competitor.tournamentMatchup().seed());
@@ -138,7 +152,7 @@ public class ScheduleService {
                         Team t = teams.get(competitor.id());
                         g.setAwayTeam(t);
                         if (competitor.score() != null && !competitor.score().isBlank()) {
-                            g.setAwayScore(Integer.parseInt(competitor.score()));
+                            g.setAwayScore(Integer.valueOf(competitor.score()));
                         }
                         if (competitor.tournamentMatchup() != null) {
                             g.setAwayTeamSeed(competitor.tournamentMatchup().seed());

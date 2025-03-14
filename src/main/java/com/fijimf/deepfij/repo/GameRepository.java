@@ -1,12 +1,13 @@
 package com.fijimf.deepfij.repo;
 
-import com.fijimf.deepfij.model.schedule.Game;
-import com.fijimf.deepfij.model.schedule.Season;
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
-import java.util.List;
+import com.fijimf.deepfij.model.schedule.Game;
+import com.fijimf.deepfij.model.schedule.Season;
 
 @Repository
 public interface GameRepository extends JpaRepository<Game, Long> {
