@@ -2,7 +2,6 @@ package com.fijimf.deepfij.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -88,54 +87,14 @@ public class WonLostStatisticService {
                 }
             }
 
-            // Create statistics for all teams for this date
             for (Map.Entry<Team, Integer> entry : wins.entrySet()) {
                 Team team = entry.getKey();
-                
-                TeamStatistic winsStat = new TeamStatistic();
-                winsStat.setTeam(team);
-                winsStat.setSeason(season);
-                winsStat.setStatisticDate(date);
-                winsStat.setStatisticType(winsType);
-                winsStat.setNumericValue(BigDecimal.valueOf(wins.get(team)));
-                winsStat.setLastUpdatedAt(ZonedDateTime.now());
-                statistics.add(winsStat);
-
-                TeamStatistic lossesStat = new TeamStatistic();
-                lossesStat.setTeam(team);
-                lossesStat.setSeason(season);
-                lossesStat.setStatisticDate(date);
-                lossesStat.setStatisticType(lossesType);
-                lossesStat.setNumericValue(BigDecimal.valueOf(losses.get(team)));
-                lossesStat.setLastUpdatedAt(ZonedDateTime.now());
-                statistics.add(lossesStat);
-
-                TeamStatistic winStreakStat = new TeamStatistic();
-                winStreakStat.setTeam(team);
-                winStreakStat.setSeason(season);
-                winStreakStat.setStatisticDate(date);
-                winStreakStat.setStatisticType(winStreakType);
-                winStreakStat.setNumericValue(BigDecimal.valueOf(winStreak.get(team)));
-                winStreakStat.setLastUpdatedAt(ZonedDateTime.now());
-                statistics.add(winStreakStat);
-
-                TeamStatistic lossStreakStat = new TeamStatistic();
-                lossStreakStat.setTeam(team);
-                lossStreakStat.setSeason(season);
-                lossStreakStat.setStatisticDate(date);
-                lossStreakStat.setStatisticType(lossStreakType);
-                lossStreakStat.setNumericValue(BigDecimal.valueOf(lossStreak.get(team)));
-                lossStreakStat.setLastUpdatedAt(ZonedDateTime.now());
-                statistics.add(lossStreakStat);
-
-                TeamStatistic winningPctStat = new TeamStatistic();
-                winningPctStat.setTeam(team);
-                winningPctStat.setSeason(season);
-                winningPctStat.setStatisticDate(date);
-                winningPctStat.setStatisticType(winningPctType);
-                winningPctStat.setNumericValue(BigDecimal.valueOf(winningPct.get(team)));
-                winningPctStat.setLastUpdatedAt(ZonedDateTime.now());
-                statistics.add(winningPctStat);
+                TeamStatisticBuilder base = new TeamStatisticBuilder().withTeam(team).withSeason(season).withDate(date);
+                statistics.add(base.withType(winsType).withValue(BigDecimal.valueOf(wins.get(team))).build());
+                statistics.add(base.withType(lossesType).withValue(BigDecimal.valueOf(losses.get(team))).build());
+                statistics.add(base.withType(winStreakType).withValue(BigDecimal.valueOf(winStreak.get(team))).build());
+                statistics.add(base.withType(lossStreakType).withValue(BigDecimal.valueOf(lossStreak.get(team))).build());
+                statistics.add(base.withType(winningPctType).withValue(BigDecimal.valueOf(winningPct.get(team))).build());
             }
         }
         return statistics;
