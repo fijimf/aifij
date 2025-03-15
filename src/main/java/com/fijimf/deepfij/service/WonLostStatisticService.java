@@ -18,7 +18,6 @@ import com.fijimf.deepfij.model.schedule.Team;
 import com.fijimf.deepfij.model.statistics.StatisticType;
 import com.fijimf.deepfij.model.statistics.TeamStatistic;
 import com.fijimf.deepfij.repo.GameRepository;
-import com.fijimf.deepfij.repo.StatisticTypeRepository;
 
 @Service
 public class WonLostStatisticService {
@@ -27,22 +26,15 @@ public class WonLostStatisticService {
     private GameRepository gameRepository;
 
     @Autowired
-    private StatisticTypeRepository statisticTypeRepository;
-
-    @Autowired
-    private StatisticUtils statisticUtils;
+    private StatisticTypeService statisticTypeService;
 
     public List<TeamStatistic> createWonLostStatistic(Season season) {
-        StatisticType winsType = statisticTypeRepository.findByCode("WINS")
-                .orElseGet(() -> statisticUtils.createStatisticType("WINS", "WINS", "Wins", true));
-        StatisticType lossesType = statisticTypeRepository.findByCode("LOSSES")
-                .orElseGet(() -> statisticUtils.createStatisticType("LOSSES", "LOSSES", "Losses", false));
-        StatisticType winStreakType = statisticTypeRepository.findByCode("WIN_STREAK")
-                .orElseGet(() -> statisticUtils.createStatisticType("WIN_STREAK", "WIN_STREAK", "Winning Streak", true));
-        StatisticType lossStreakType = statisticTypeRepository.findByCode("LOSS_STREAK")
-                .orElseGet(() -> statisticUtils.createStatisticType("LOSS_STREAK", "LOSS_STREAK", "Losing Streak", false));
-        StatisticType winningPctType = statisticTypeRepository.findByCode("WIN_PCT")
-                .orElseGet(() -> statisticUtils.createStatisticType("WIN_PCT", "WIN_PCT", "Winning Pct", true));
+
+        StatisticType winsType = statisticTypeService.findOrCreateStatisticType("WINS", "WINS", "Wins", true);
+        StatisticType lossesType = statisticTypeService.findOrCreateStatisticType("LOSSES", "LOSSES", "Losses", false);
+        StatisticType winStreakType = statisticTypeService.findOrCreateStatisticType("WIN_STREAK", "WIN_STREAK", "Winning Streak", true);
+        StatisticType lossStreakType = statisticTypeService.findOrCreateStatisticType("LOSS_STREAK", "LOSS_STREAK", "Losing Streak", false);
+        StatisticType winningPctType = statisticTypeService.findOrCreateStatisticType("WIN_PCT", "WIN_PCT", "Winning Pct", true);
 
         // Get all games for the season ordered by date
         List<Game> games = gameRepository.findBySeasonOrderByDateAsc(season);

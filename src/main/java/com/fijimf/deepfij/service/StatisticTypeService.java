@@ -11,7 +11,7 @@ public class StatisticTypeService {
     @Autowired
     private StatisticTypeRepository statisticTypeRepository;
     
-    public StatisticType getOrCreateStatisticType(String code, String name, String description, boolean isHigherBetter) {
+    public StatisticType findOrCreateStatisticType(String code, String name, String description, boolean isHigherBetter) {
         return statisticTypeRepository.findByCode(code)
                 .orElseGet(() -> {
                     StatisticType type = new StatisticType();
