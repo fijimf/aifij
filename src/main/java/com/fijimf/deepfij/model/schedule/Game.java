@@ -331,4 +331,81 @@ public class Game {
         }
     }
 
+    public Team getWinner() {
+        if (homeScore > awayScore) {
+            return homeTeam;
+        } else if (homeScore < awayScore) {
+            return awayTeam;
+        } else {
+            return null;
+        }
+    }
+
+    public Team getLoser(){
+        if (homeScore > awayScore) {
+            return awayTeam;
+        } else if (homeScore < awayScore) {
+            return homeTeam;
+        } else {
+            return null;
+        }
+    }
+    public boolean hasTeam(Team team) {
+        return Objects.equals(homeTeam, team) || Objects.equals(awayTeam, team);
+    }
+
+    public boolean isHomeGame(Team team) {
+        return Objects.equals(homeTeam, team) && !neutralSite;
+    }
+
+    public boolean isAwayGame(Team team) {
+        return Objects.equals(awayTeam, team) && !neutralSite;
+    }
+
+    public boolean isNeutralGame() {
+        return neutralSite;
+    }
+
+    public boolean isFinal(){
+        return homeScore != null && awayScore != null && homeScore > 0 && awayScore > 0;
+    }
+
+    public boolean isWinner(Team team){
+        return isFinal() && Objects.equals(team, getWinner());
+    }
+
+    public boolean isLoser(Team team){
+        return isFinal() && Objects.equals(team, getLoser());
+    }
+
+    public Team getOpponent(Team t) {
+        if (homeTeam.equals(t)) {
+            return awayTeam;
+        } else if (awayTeam.equals(t)) {
+            return homeTeam;
+        } else {
+            throw new IllegalArgumentException("Team " + t.getName() + " is not a game participant");
+        }
+    }
+
+    public Integer getScore(Team team) {
+        if (homeTeam.equals(team)) {
+            return homeScore;
+        } else if (awayTeam.equals(team)) {
+            return awayScore;
+        } else {
+            throw new IllegalArgumentException("Team " + team.getName() + " is not a game participant");
+        }
+
+    }
+
+    public Integer getMoneyLine(Team team) {
+        if (homeTeam.equals(team)) {
+            return homeMoneyLine;
+        } else if (awayTeam.equals(team)) {
+            return awayMoneyLine;
+        } else {
+            throw new IllegalArgumentException("Team " + team.getName() + " is not a game participant");
+        }
+    }
 }

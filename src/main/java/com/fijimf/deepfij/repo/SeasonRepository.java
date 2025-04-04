@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface SeasonRepository extends JpaRepository<Season, Long> {
     List<Season> findByYear(int yyyy);
+
+    Season findFirstByOrderByYearDesc();
 }
