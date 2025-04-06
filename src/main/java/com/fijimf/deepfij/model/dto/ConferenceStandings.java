@@ -17,7 +17,7 @@ public record ConferenceStandings (Conference conference, List<StandingsRow> sta
             com.fijimf.deepfij.model.schedule.Record conferenceRecord = com.fijimf.deepfij.model.schedule.Record.create(conferenceGames, team);
             com.fijimf.deepfij.model.schedule.Record overallRecord = Record.create(games, team);
             return new StandingsRow(team, conferenceRecord, overallRecord);
-        }).sorted().toList();
+        }).sorted().toList().reversed();
         return new ConferenceStandings(conference, standingsRows);
     }
 }

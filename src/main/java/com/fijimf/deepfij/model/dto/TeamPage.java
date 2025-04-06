@@ -11,14 +11,16 @@ public record TeamPage(Integer season, TeamDTO team, Map<String, Record> records
                        List<GameDTO> games) {
 
     public static TeamPage create(Team t, Season s) {
-        List<Game> games = s.getGames().stream().filter(game -> game.getHomeTeam().equals(t) || game.getAwayTeam().equals(t)).toList();
+        List<Game> allGames = s.getGames();
+        List<Game> games = allGames.stream().filter(game -> game.getHomeTeam().equals(t) || game.getAwayTeam().equals(t)).toList();
         Conference c = s.getConferenceMappings().stream().filter(mapping -> mapping.getTeam().equals(t)).map(ConferenceMapping::getConference).findFirst().orElseThrow(RuntimeException::new);
-        Set<com.fijimf.deepfij.model.schedule.Team> conferenceTeams = s.getConferenceMappings()
+        Set<Team> conferenceTeams = s.getConferenceMappings()
                 .stream()
                 .filter(m -> Objects.equals(m.getConference(), c))
                 .map(ConferenceMapping::getTeam)
                 .collect(Collectors.toSet());
-        ConferenceStandings standings = ConferenceStandings.create(c, conferenceTeams, games);
+        List<Game> conferenceGames = allGames.stream().filter(game -> conferenceTeams.contains(game.getHomeTeam()) || conferenceTeams.contains(game.getAwayTeam())).toList();
+        ConferenceStandings standings = ConferenceStandings.create(c, conferenceTeams, conferenceGames);
 
         TeamDTO team = TeamDTO.fromTeam(t);
 
