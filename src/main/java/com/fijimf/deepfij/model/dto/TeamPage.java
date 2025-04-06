@@ -40,11 +40,18 @@ public record TeamPage(Integer season, TeamDTO team, Map<String, Record> records
             String atVs = (game.isNeutralGame() || game.isHomeGame(t)) ? "vs." : "@";
             Integer oppScore = game.getScore(opp);
             Integer score = game.getScore(t);
+            String wOrL = game.isWinner(t) ? "W" : (game.isLoser(t) ? "L" : "");
             Double spread = game.getSpread();
+            String spreadDescription = game.getSpreadDescription();
+            boolean covered = game.covered(t);
             Double overUnder = game.getOverUnder();
+            String overOrUnder = game.getOverOrUnder();
             Integer moneyLine = game.getMoneyLine(t);
+            boolean moneyLinePaid = game.isWinner(t);
             Integer oppMoneyLine = game.getMoneyLine(opp);
-            return new GameDTO(id, TeamDTO.fromTeam(opp), atVs, game.isNeutralGame(), date, score, oppScore, spread, overUnder, moneyLine, oppMoneyLine);
+            boolean oppMoneyLinePaid = game.isWinner(opp);
+            return new GameDTO(id, TeamDTO.fromTeam(opp), atVs, game.isNeutralGame(), date, score, oppScore,wOrL, spread,
+                    spreadDescription, covered, overUnder,overOrUnder, moneyLine,moneyLinePaid, oppMoneyLine,oppMoneyLinePaid);
         }).toList();
 
         return new TeamPage(s.getYear(), team, records, conference, gs);
@@ -73,6 +80,8 @@ public record TeamPage(Integer season, TeamDTO team, Map<String, Record> records
     }
 
     public record GameDTO(Long id, TeamDTO opponent, String atVs, boolean isNeutralSite, LocalDate date, Integer score,
-                          Integer oppScore, Double spread, Double overUnder, Integer moneyLine, Integer oppMoneyLine) {
+                          Integer oppScore, String wOrL, Double spread, String spreadDescription, boolean spreadCovered,
+                          Double overUnder, String overOrUnder, Integer moneyLine, boolean moneyLinePaid,
+                          Integer oppMoneyLine, boolean oppMoneyLinePaid) {
     }
 }

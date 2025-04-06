@@ -1,20 +1,12 @@
 package com.fijimf.deepfij.model.schedule;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Objects;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "game")
@@ -341,7 +333,7 @@ public class Game {
         }
     }
 
-    public Team getLoser(){
+    public Team getLoser() {
         if (homeScore > awayScore) {
             return awayTeam;
         } else if (homeScore < awayScore) {
@@ -350,6 +342,7 @@ public class Game {
             return null;
         }
     }
+
     public boolean hasTeam(Team team) {
         return Objects.equals(homeTeam, team) || Objects.equals(awayTeam, team);
     }
@@ -366,15 +359,15 @@ public class Game {
         return neutralSite;
     }
 
-    public boolean isFinal(){
+    public boolean isFinal() {
         return homeScore != null && awayScore != null && homeScore > 0 && awayScore > 0;
     }
 
-    public boolean isWinner(Team team){
+    public boolean isWinner(Team team) {
         return isFinal() && Objects.equals(team, getWinner());
     }
 
-    public boolean isLoser(Team team){
+    public boolean isLoser(Team team) {
         return isFinal() && Objects.equals(team, getLoser());
     }
 
@@ -407,5 +400,37 @@ public class Game {
         } else {
             throw new IllegalArgumentException("Team " + team.getName() + " is not a game participant");
         }
+    }
+
+    public String getOverOrUnder() {
+        if (overUnder != null && isFinal()) {
+            if (homeScore + awayScore > overUnder) {
+                return "OVER";
+            } else if (homeScore + awayScore < overUnder) {
+                return "UNDER";
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+
+    public boolean covered(Team team) {
+        if (isFinal() && spread != null) {
+            if (homeTeam.equals(team)) {
+                return (homeScore - awayScore > spread);
+            } else if (awayTeam.equals(team)) {
+                return (awayScore - homeScore > spread);
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    public String getSpreadDescription() {
+        return spread == null ? "" : "%s%+4.1f".formatted(homeTeam.getAbbreviation(), spread);
     }
 }
