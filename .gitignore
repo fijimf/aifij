@@ -1,2 +1,21 @@
 # Project exclude paths
 /target/
+.idea/aifij.iml
+.idea/.name
+.idea/compiler.xml
+.idea/dataSources.xml
+.idea/encodings.xml
+.idea/jarRepositories.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/sqldialects.xml
+src/.DS_Store
+src/main/.DS_Store
+src/main/java/.DS_Store
+src/main/java/com/.DS_Store
+src/main/java/com/fijimf/.DS_Store
+src/main/java/com/fijimf/deepfij/.DS_Store
+.idea/.gitignore
+.idea/vcs.xml
+.idea/inspectionProfiles/Project_Default.xml
+.DS_Store
