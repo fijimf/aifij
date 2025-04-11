@@ -26,16 +26,16 @@ pipeline {
             }
         }
         
-        stage('Push Docker Image') {
-            steps {
-                script {
-                    // Push to Docker registry
-                    docker.withRegistry('https://${DOCKER_REGISTRY}', 'docker-credentials') {
-                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
-                    }
-                }
-            }
-        }
+//         stage('Push Docker Image') {
+//             steps {
+//                 script {
+//                     // Push to Docker registry
+//                     docker.withRegistry('https://${DOCKER_REGISTRY}', 'docker-credentials') {
+//                         docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
+//                     }
+//                 }
+//             }
+//         }
     }
     
     post {
