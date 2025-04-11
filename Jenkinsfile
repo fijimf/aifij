@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'aifij'
         DOCKER_TAG = "${env.BUILD_NUMBER}"
-        DOCKER_REGISTRY = 'your-docker-registry' // Replace with your Docker registry
+        // DOCKER_REGISTRY = 'your-docker-registry' // Replace with your Docker registry
     }
     
     stages {
