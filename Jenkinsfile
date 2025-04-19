@@ -20,21 +20,12 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
+                 if (env.BRANCH_NAME.startsWith('release')) {
+                        sh 'docker build -t ${DOCKER_IMAGE}:${env.BRANCH_NAME} .'
+                    }
                 }
             }
         }
-        
-//         stage('Push Docker Image') {
-//             steps {
-//                 script {
-//                     // Push to Docker registry
-//                     docker.withRegistry('https://${DOCKER_REGISTRY}', 'docker-credentials') {
-//                         docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
-//                     }
-//                 }
-//             }
-//         }
     }
     
     post {
