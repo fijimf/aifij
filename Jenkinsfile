@@ -4,6 +4,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'aifij'
         DOCKER_TAG = "${env.BUILD_NUMBER}"
+        IMAGE_VERSION="${env.BRANCH_NAME}"
         // DOCKER_REGISTRY = 'your-docker-registry' // Replace with your Docker registry
     }
     
@@ -21,7 +22,7 @@ pipeline {
             steps {
                 script {
                  if (env.BRANCH_NAME.startsWith('release')) {
-                        sh 'docker build -t ${DOCKER_IMAGE}:${env.BRANCH_NAME} .'
+                        sh 'docker build -t ${DOCKER_IMAGE}:${IMAGE_VERSION} -t ${DOCKER_IMAGE}:latest .'
                     }
                 }
             }
