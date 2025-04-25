@@ -4,6 +4,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +26,7 @@ import com.fijimf.deepfij.service.UserService;
 @RestController
 public class AuthController {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
     private final AuthenticationManager authenticationManager;
 
     private final JwtUtil jwtUtil;
@@ -52,6 +56,7 @@ public class AuthController {
             UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUsername());
             String token = jwtUtil.generateToken(userDetails.getUsername());
             Map<String, String> response = new HashMap<>();
+            log.info("Authentication successful for user {}\n{}", authRequest.getUsername(), StringUtils.abbreviate(token, 15));
             response.put("token", token);
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (UsernameNotFoundException usernameNotFoundException) {
