@@ -64,7 +64,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Collections.singletonList("*")); // Replace with your allowed origin(s)
+        Arrays.asList(
+                "http://fijimf.com",
+                "http://localhost:3000",  // If you need local development
+                "https://fijimf.com"      // If you also have HTTPS version
+        );
+//        configuration.setAllowedOrigins(Collections.singletonList("*")); // Replace with your allowed origin(s)
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Origin", "Accept"));
         configuration.setAllowCredentials(true);
