@@ -18,12 +18,14 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fijimf.deepfij.auth.util.JwtUtil;
 import com.fijimf.deepfij.service.UserService;
 
 @RestController
+@RequestMapping("/api")
 public class AuthController {
 
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
