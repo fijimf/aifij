@@ -19,7 +19,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.Collections;
 
 @Configuration
 public class SecurityConfig {
@@ -61,15 +60,15 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        Arrays.asList(
+        configuration.setAllowedOrigins(Arrays.asList(
                 "http://fijimf.com",
                 "http://localhost:3000",  // If you need local development
                 "https://fijimf.com"      // If you also have HTTPS version
-        );
-//        configuration.setAllowedOrigins(Collections.singletonList("*")); // Replace with your allowed origin(s)
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Origin", "Accept"));
         configuration.setAllowCredentials(true);
