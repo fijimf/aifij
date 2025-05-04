@@ -1,5 +1,6 @@
 package com.fijimf.deepfij.controller;
 
+import com.fijimf.deepfij.model.dto.TeamsPage;
 import com.fijimf.deepfij.model.schedule.Season;
 import com.fijimf.deepfij.model.schedule.Team;
 import com.fijimf.deepfij.model.dto.TeamPage;
@@ -9,11 +10,14 @@ import com.fijimf.deepfij.repo.TeamRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 public class ScheduleController {
@@ -27,6 +31,7 @@ public class ScheduleController {
     @Autowired
     private TeamRepository teamRepository;
 
+    @Cacheable(value = "teamPages", key = "#year + '-' + #teamId")
     @GetMapping("/team/{teamId}")
     public ResponseEntity<TeamPage> getTeamData(@PathVariable Long teamId, @RequestParam(required = false) Integer year) {
 
@@ -41,6 +46,18 @@ public class ScheduleController {
         Team team = teamRepository.findById(teamId).orElse(null);
         if (team == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok(TeamPage.create(team, season));
+
+    }
+
+    @Cacheable(value = "teamPages")
+    @GetMapping("/teams")
+    public ResponseEntity<TeamsPage> getTeamData() {
+
+        logger.info("Fetching teams");
+        List<Team> teams = teamRepository.findAll();
+        Season season = seasonRepository.findFirstByOrderByYearDesc(); // Fetch most recent season
+        if (season == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(TeamsPage.create(teams, season));
 
     }
 }
