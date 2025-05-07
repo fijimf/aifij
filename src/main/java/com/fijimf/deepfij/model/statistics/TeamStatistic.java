@@ -106,7 +106,7 @@ public class TeamStatistic {
         this.lastUpdatedAt = lastUpdatedAt;
     }
 
-    public class TeamStatisticBuilder {
+    public static class TeamStatisticBuilder {
         private Team team;
         private Season season;
         private LocalDate date;

@@ -20,16 +20,19 @@ import com.fijimf.deepfij.model.statistics.TeamStatistic;
 import com.fijimf.deepfij.repo.GameRepository;
 
 @Service
-public class WonLostStatisticService {
+public class WonLostStatisticModel implements StatisticalModel {
 
     @Autowired
     private GameRepository gameRepository;
 
     @Autowired
     private StatisticTypeService statisticTypeService;
-
-    public List<TeamStatistic> createWonLostStatistic(Season season) {
-
+    @Override
+    public String key() {
+        return "WONLOST";
+    }
+    @Override
+    public List<TeamStatistic> generate(Season season) {
         StatisticType winsType = statisticTypeService.findOrCreateStatisticType("WINS", "WINS", "Wins", true);
         StatisticType lossesType = statisticTypeService.findOrCreateStatisticType("LOSSES", "LOSSES", "Losses", false);
         StatisticType winStreakType = statisticTypeService.findOrCreateStatisticType("WIN_STREAK", "WIN_STREAK", "Winning Streak", true);
