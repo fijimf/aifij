@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface TeamRepository  extends JpaRepository<Team, Long> {
     List<Team> findByEspnId(String id);
+
+    Team findByAbbreviation(String key);
 }
