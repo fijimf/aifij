@@ -7,6 +7,7 @@ import com.fijimf.deepfij.model.statistics.StatisticType;
 import com.fijimf.deepfij.model.statistics.TeamStatistic;
 import com.fijimf.deepfij.repo.TeamRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -20,12 +21,14 @@ public class LogisticRegressionStatisticModel implements StatisticalModel {
     private final RestTemplate restTemplate;
     private final TeamRepository teamRepository;
     private final StatisticTypeService statisticTypeService;
+    private final String apiUrl;
 
     @Autowired
-    public LogisticRegressionStatisticModel(TeamRepository teamRepository, StatisticTypeService statisticTypeService) {
+    public LogisticRegressionStatisticModel(TeamRepository teamRepository, StatisticTypeService statisticTypeService, @Value("${pystats.api.url:http://127.0.0.1:5000}") String apiUrl) {
         this.teamRepository = teamRepository;
         this.statisticTypeService = statisticTypeService;
         this.restTemplate = new RestTemplate();
+        this.apiUrl = apiUrl;
     }
 
     @Override
@@ -36,7 +39,7 @@ public class LogisticRegressionStatisticModel implements StatisticalModel {
     @Override
     public List<TeamStatistic> generate(Season season) {
         StatisticType type = statisticTypeService.findOrCreateStatisticType("LOGISTIC_REGRESSION", "LOGISTIC_REGRESSION", "Logistic Regression", true);
-        String url = String.format("http://127.0.0.1:5000/api/rankings/logistic?year=%d", season.getYear());
+        String url = String.format(apiUrl +"/api/rankings/logistic?year=%d", season.getYear());
         JsonNode response = restTemplate.getForObject(url, JsonNode.class);
         List<TeamStatistic> statistics = new ArrayList<>();
         if (response != null && response.has("data")) {
