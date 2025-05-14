@@ -1,12 +1,7 @@
 package com.fijimf.deepfij.controller;
 
-import com.fijimf.deepfij.model.dto.TeamsPage;
-import com.fijimf.deepfij.model.schedule.Season;
-import com.fijimf.deepfij.model.schedule.Team;
-import com.fijimf.deepfij.model.dto.TeamPage;
-import com.fijimf.deepfij.repo.GameRepository;
-import com.fijimf.deepfij.repo.SeasonRepository;
-import com.fijimf.deepfij.repo.TeamRepository;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,14 +12,16 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.fijimf.deepfij.model.dto.TeamPage;
+import com.fijimf.deepfij.model.dto.TeamsPage;
+import com.fijimf.deepfij.model.schedule.Season;
+import com.fijimf.deepfij.model.schedule.Team;
+import com.fijimf.deepfij.repo.SeasonRepository;
+import com.fijimf.deepfij.repo.TeamRepository;
 
 @RestController
 public class ScheduleController {
     private static final Logger logger = LoggerFactory.getLogger(ScheduleController.class);
-
-    @Autowired
-    private GameRepository gameRepository;
 
     @Autowired
     private SeasonRepository seasonRepository; // Inject SeasonRepository

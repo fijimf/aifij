@@ -1,6 +1,8 @@
 package com.fijimf.deepfij.service;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -19,6 +21,8 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fijimf.deepfij.model.User;
+import com.fijimf.deepfij.model.schedule.Audit;
 import com.fijimf.deepfij.model.schedule.Conference;
 import com.fijimf.deepfij.model.schedule.ConferenceMapping;
 import com.fijimf.deepfij.model.schedule.Game;
@@ -30,6 +34,7 @@ import com.fijimf.deepfij.model.scraping.standings.ConferenceStanding;
 import com.fijimf.deepfij.model.scraping.standings.StandingsEntry;
 import com.fijimf.deepfij.model.scraping.standings.StandingsResponse;
 import com.fijimf.deepfij.model.scraping.team.RawTeam;
+import com.fijimf.deepfij.repo.AuditRepository;
 import com.fijimf.deepfij.repo.ConferenceMappingRepository;
 import com.fijimf.deepfij.repo.ConferenceRepository;
 import com.fijimf.deepfij.repo.GameRepository;
@@ -48,23 +53,27 @@ public class ScheduleService {
     private final ConferenceMappingRepository conferenceMappingRepository;
     private final GameRepository gameRepository;
     private final SeasonRepository seasonRepository;
+    private final AuditRepository auditRepository;
 
     @PersistenceContext
     private final EntityManager entityManager; // Direct access to handle flushing
 
     private static final Logger logger = LoggerFactory.getLogger(ScheduleService.class);
-
-    public ScheduleService(@Autowired ScrapingService scrapingService, @Autowired TeamRepository teamRepository, @Autowired ConferenceRepository conferenceRepository, @Autowired ConferenceMappingRepository conferenceMappingRepository, @Autowired GameRepository gameRepository, @Autowired SeasonRepository seasonRepository, @Autowired EntityManager entityManager) {
+    
+    @Autowired
+    public ScheduleService( ScrapingService scrapingService,  TeamRepository teamRepository,  ConferenceRepository conferenceRepository,  ConferenceMappingRepository conferenceMappingRepository,  GameRepository gameRepository,  SeasonRepository seasonRepository, AuditRepository auditRepository,  EntityManager entityManager) {
         this.scrapingService = scrapingService;
         this.teamRepository = teamRepository;
         this.conferenceRepository = conferenceRepository;
         this.conferenceMappingRepository = conferenceMappingRepository;
         this.gameRepository = gameRepository;
         this.seasonRepository = seasonRepository;
+        this.auditRepository = auditRepository;
         this.entityManager = entityManager;
     }
 
-    public List<Conference> loadConferences() {
+    public List<Conference> loadConferences(User user) {
+        LocalDateTime start = LocalDateTime.now();
         scrapingService.fetchConferences()
                 .stream()
                 .filter(RawConference::isConference)
@@ -80,10 +89,23 @@ public class ScheduleService {
                         logger.info("Conference " + conference.getName() + " updated from ESPN");
                     }
                 });
-        return conferenceRepository.findAll();
+        LocalDateTime end = LocalDateTime.now();
+        List<Conference> conferences = conferenceRepository.findAll();
+        auditRepository.save(new Audit(0L,"loadConferences","%d conferences loaded".formatted(conferences.size()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
+        return conferences;
     }
 
-    public List<Team> loadTeams() {
+    public int dropConferences(User user) {
+        LocalDateTime start = LocalDateTime.now();
+        long count = conferenceRepository.count();
+         conferenceRepository.deleteAll();
+        LocalDateTime end = LocalDateTime.now();
+        auditRepository.save(new Audit(0L,"dropConferences","%d conferences dropped".formatted(conferenceRepository.count()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
+        return (int) count;
+    }
+
+    public List<Team> loadTeams(User user) {
+        LocalDateTime start = LocalDateTime.now();
         scrapingService.fetchTeams()
                 .getFirst()
                 .leagues()
@@ -98,13 +120,26 @@ public class ScheduleService {
                         Team t = teams.getFirst();
                         w.updateTeam(t);
                         teamRepository.save(t);
+                        logger.info("Team " + t.getName() + " updated from ESPN");
                     }
                 });
-        return teamRepository.findAll();
+        LocalDateTime end = LocalDateTime.now();
+        List<Team> teams = teamRepository.findAll();
+        auditRepository.save(new Audit(0L,"loadTeams","%d teams loaded".formatted(teams.size()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
+        return teams;
     }
 
-    public List<Game> fetchGames(LocalDate index, Season season) {
+    public int dropTeams(User user) {
+        LocalDateTime start = LocalDateTime.now();
+        long count = teamRepository.count();
+        teamRepository.deleteAll();
+        LocalDateTime end = LocalDateTime.now();
+        auditRepository.save(new Audit(0L,"dropTeams","%d teams dropped".formatted(count), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
+        return (int) count;
+    }
 
+    public List<Game> fetchGames(LocalDate index, Season season, User user) {
+        LocalDateTime start = LocalDateTime.now();
         logger.info("Fetching games for " + index);
         ScoreboardResponse scoreboard = scrapingService.fetchScoreboard(Integer.parseInt(index.format(DateTimeFormatter.ofPattern("yyyyMMdd"))));
         if (scoreboard == null) {
@@ -116,7 +151,7 @@ public class ScheduleService {
                 .findBySeason(season).stream()
                 .map(ConferenceMapping::getTeam)
                 .collect(Collectors.toMap(Team::getEspnId, Function.identity()));
-        logger.info("Scraped "+scoreboard.events().size()+" events for date "+index);
+        logger.info("Scraped " + scoreboard.events().size() + " events for date " + index);
 
         List<Game> games = scoreboard.events().stream().flatMap(event -> {
             Game g = new Game();
@@ -178,7 +213,9 @@ public class ScheduleService {
             }
         }).toList();
 
-        logger.info("Converted "+games.size()+" games for date "+index);
+        logger.info("Converted " + games.size() + " games for date " + index);
+        LocalDateTime end = LocalDateTime.now();
+        auditRepository.save(new Audit(0L,"fetchGames","%d games fetched".formatted(games.size()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
         return games;
 
     }
@@ -199,9 +236,9 @@ public class ScheduleService {
     }
 
     @Transactional
-    public void createSchedule(int yyyy) {
-        if (teamRepository.count() == 0) loadTeams();
-        if (conferenceRepository.count() == 0) loadConferences();
+    public void createSchedule(int yyyy, User user) {
+        if (teamRepository.count() == 0) loadTeams(user);
+        if (conferenceRepository.count() == 0) loadConferences(user);
 
         Season s = findOrCreate(yyyy);
         long mappingsDeleted = conferenceMappingRepository.deleteBySeason(s);
@@ -227,7 +264,7 @@ public class ScheduleService {
 
         Stream.iterate(s.getStartDate(), date -> !date.isAfter(s.getEndDate()), date -> date.plusDays(1)).forEach(
                 d -> {
-                    List<Game> games = fetchGames(d, s);
+                    List<Game> games = fetchGames(d, s, user);
 
                     updateGames(d, s, games);
                 }
@@ -248,7 +285,7 @@ public class ScheduleService {
         gameRepository.saveAll(inserts);
         logger.info("For date " + index + " " + updates.size() + " were potentially updated.");
 
-        List<Game> updatedGames =updates.stream().map(g->Game.update(oldGames.get(g.getEspnId()), g)).filter(Objects::nonNull).toList();
+        List<Game> updatedGames = updates.stream().map(g -> Game.update(oldGames.get(g.getEspnId()), g)).filter(Objects::nonNull).toList();
         logger.info("For date " + index + " " + updatedGames.size() + " were actually updated");
         gameRepository.saveAll(updatedGames);
 
@@ -281,7 +318,7 @@ public class ScheduleService {
         }
     }
 
-    public Conference findOrCreateConference(ConferenceStanding cs) {
+    private Conference findOrCreateConference(ConferenceStanding cs) {
         List<Conference> confs = conferenceRepository.findByEspnId(cs.id());
         if (!confs.isEmpty()) {
             return confs.getFirst();
@@ -314,8 +351,8 @@ public class ScheduleService {
         return new ScheduleStatus(numTeams, numConferences, seasons);
     }
 
-    public List<Game> fetchGames(int seasonYear, LocalDate localDate) {
-        return fetchGames(localDate, seasonRepository.findByYear(seasonYear).getFirst());
+    public List<Game> fetchGames(int seasonYear, LocalDate localDate, User user) {
+        return fetchGames(localDate, seasonRepository.findByYear(seasonYear).getFirst(), user);
     }
 
     public record ScheduleStatus(long numberOfTeams, long numberOfConferences, List<SeasonStatus> seasons) {
