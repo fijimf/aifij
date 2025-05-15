@@ -55,11 +55,25 @@ public class ScheduleAdminController {
         return ResponseEntity.ok(conferences);
     }
 
+    @GetMapping("/dropConferences")
+    public ResponseEntity<Integer> dropConferences(HttpServletRequest httpServletRequest) {
+        User user = getUser(httpServletRequest);
+        int count = scheduleService.dropConferences(user);
+        return ResponseEntity.ok(count);
+    }
+
     @GetMapping("/loadTeams")
     public ResponseEntity<List<Team>> loadTeams(HttpServletRequest httpServletRequest) {
         User user = getUser(httpServletRequest);
         List<Team> teams = scheduleService.loadTeams(user);
         return ResponseEntity.ok(teams);
+    }
+
+    @GetMapping("/dropTeams")
+    public ResponseEntity<Integer> dropTeams(HttpServletRequest httpServletRequest) {
+        User user = getUser(httpServletRequest);
+        int count = scheduleService.dropTeams(user);
+        return ResponseEntity.ok(count);
     }
 
     @GetMapping("/loadSeason")
@@ -69,6 +83,12 @@ public class ScheduleAdminController {
         return ResponseEntity.ok(scheduleService.getStatus());
     }
 
+    @GetMapping("/dropSeason")
+    public ResponseEntity<Integer> dropSeason(HttpServletRequest httpServletRequest, @RequestParam int seasonYear) {
+        User user = getUser(httpServletRequest);
+        int count = scheduleService.dropSeason(seasonYear, user);
+        return ResponseEntity.ok(count);
+    }
     @GetMapping("/loadGames")
     public ResponseEntity<List<Game>> fetchGames(@RequestParam int seasonYear, @RequestParam String date, HttpServletRequest httpServletRequest) {
         // Parse the date string into LocalDate

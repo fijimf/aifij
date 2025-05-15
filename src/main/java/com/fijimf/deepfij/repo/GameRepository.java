@@ -14,4 +14,6 @@ public interface GameRepository extends JpaRepository<Game, Long> {
     List<Game> findBySeasonOrderByDateAsc(Season s);
 
     List<Game> findBySeasonAndIndexDate(Season s, LocalDate d);
+
+    long deleteBySeason(Season s);
 }

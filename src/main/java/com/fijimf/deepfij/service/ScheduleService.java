@@ -40,6 +40,7 @@ import com.fijimf.deepfij.repo.ConferenceRepository;
 import com.fijimf.deepfij.repo.GameRepository;
 import com.fijimf.deepfij.repo.SeasonRepository;
 import com.fijimf.deepfij.repo.TeamRepository;
+import com.fijimf.deepfij.repo.TeamStatisticRepository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -47,6 +48,7 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class ScheduleService {
+
     private final ScrapingService scrapingService;
     private final TeamRepository teamRepository;
     private final ConferenceRepository conferenceRepository;
@@ -57,11 +59,12 @@ public class ScheduleService {
 
     @PersistenceContext
     private final EntityManager entityManager; // Direct access to handle flushing
+    private final TeamStatisticRepository teamStatisticRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(ScheduleService.class);
-    
+
     @Autowired
-    public ScheduleService( ScrapingService scrapingService,  TeamRepository teamRepository,  ConferenceRepository conferenceRepository,  ConferenceMappingRepository conferenceMappingRepository,  GameRepository gameRepository,  SeasonRepository seasonRepository, AuditRepository auditRepository,  EntityManager entityManager) {
+    public ScheduleService(ScrapingService scrapingService, TeamRepository teamRepository, ConferenceRepository conferenceRepository, ConferenceMappingRepository conferenceMappingRepository, GameRepository gameRepository, SeasonRepository seasonRepository, AuditRepository auditRepository, EntityManager entityManager, TeamStatisticRepository teamStatisticRepository) {
         this.scrapingService = scrapingService;
         this.teamRepository = teamRepository;
         this.conferenceRepository = conferenceRepository;
@@ -70,6 +73,7 @@ public class ScheduleService {
         this.seasonRepository = seasonRepository;
         this.auditRepository = auditRepository;
         this.entityManager = entityManager;
+        this.teamStatisticRepository = teamStatisticRepository;
     }
 
     public List<Conference> loadConferences(User user) {
@@ -91,16 +95,16 @@ public class ScheduleService {
                 });
         LocalDateTime end = LocalDateTime.now();
         List<Conference> conferences = conferenceRepository.findAll();
-        auditRepository.save(new Audit(0L,"loadConferences","%d conferences loaded".formatted(conferences.size()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
+        auditRepository.save(new Audit(0L, "loadConferences", "%d conferences loaded".formatted(conferences.size()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
         return conferences;
     }
 
     public int dropConferences(User user) {
         LocalDateTime start = LocalDateTime.now();
         long count = conferenceRepository.count();
-         conferenceRepository.deleteAll();
+        conferenceRepository.deleteAll();
         LocalDateTime end = LocalDateTime.now();
-        auditRepository.save(new Audit(0L,"dropConferences","%d conferences dropped".formatted(conferenceRepository.count()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
+        auditRepository.save(new Audit(0L, "dropConferences", "%d conferences dropped".formatted(conferenceRepository.count()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
         return (int) count;
     }
 
@@ -125,7 +129,7 @@ public class ScheduleService {
                 });
         LocalDateTime end = LocalDateTime.now();
         List<Team> teams = teamRepository.findAll();
-        auditRepository.save(new Audit(0L,"loadTeams","%d teams loaded".formatted(teams.size()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
+        auditRepository.save(new Audit(0L, "loadTeams", "%d teams loaded".formatted(teams.size()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
         return teams;
     }
 
@@ -134,7 +138,7 @@ public class ScheduleService {
         long count = teamRepository.count();
         teamRepository.deleteAll();
         LocalDateTime end = LocalDateTime.now();
-        auditRepository.save(new Audit(0L,"dropTeams","%d teams dropped".formatted(count), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
+        auditRepository.save(new Audit(0L, "dropTeams", "%d teams dropped".formatted(count), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
         return (int) count;
     }
 
@@ -200,10 +204,12 @@ public class ScheduleService {
             if (event.odds() != null) {
                 g.setOverUnder(event.odds().overUnder());
                 g.setSpread(event.odds().spread());
-                if (event.odds().away() != null)
+                if (event.odds().away() != null) {
                     g.setAwayMoneyLine(event.odds().away().moneyLine());
-                if (event.odds().home() != null)
+                }
+                if (event.odds().home() != null) {
                     g.setHomeMoneyLine(event.odds().home().moneyLine());
+                }
             }
             if (g.getHomeTeam() != null && g.getAwayTeam() != null) {
                 return Stream.of(g);
@@ -215,38 +221,62 @@ public class ScheduleService {
 
         logger.info("Converted " + games.size() + " games for date " + index);
         LocalDateTime end = LocalDateTime.now();
-        auditRepository.save(new Audit(0L,"fetchGames","%d games fetched".formatted(games.size()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
+        auditRepository.save(new Audit(0L, "fetchGames", "%d games fetched".formatted(games.size()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
         return games;
 
     }
 
-
-    public Season findOrCreate(int yyyy) {
+    private Season findOrCreate(int yyyy, User user) {
         List<Season> seasonList = seasonRepository.findByYear(yyyy);
-        if (!seasonList.isEmpty()) return seasonList.getFirst();
-        else {
+        if (!seasonList.isEmpty()) {
+            return seasonList.getFirst(); 
+        }else {
+            LocalDateTime start = LocalDateTime.now();
             Season season = new Season();
             season.setId(0L);
             season.setName((yyyy - 1) + "-" + yyyy % 100);
             season.setStartDate(LocalDate.of(yyyy - 1, 11, 1));
             season.setEndDate(LocalDate.of(yyyy, 4, 30));
             season.setYear(yyyy);
-            return seasonRepository.save(season);
+            Season saved = seasonRepository.save(season);
+            LocalDateTime end = LocalDateTime.now();
+            auditRepository.save(new Audit(0L, "findOrCreate", "%d seasons loaded".formatted(seasonList.size()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
+            return saved;
         }
     }
 
     @Transactional
     public void createSchedule(int yyyy, User user) {
-        if (teamRepository.count() == 0) loadTeams(user);
-        if (conferenceRepository.count() == 0) loadConferences(user);
 
-        Season s = findOrCreate(yyyy);
-        long mappingsDeleted = conferenceMappingRepository.deleteBySeason(s);
-        entityManager.flush();
+        if (teamRepository.count() == 0) {
+            loadTeams(user);
+        }
+        if (conferenceRepository.count() == 0) {
+            loadConferences(user);
+        }
+
+        Season s = findOrCreate(yyyy, user);
+        long mappingsDeleted = deleteMappings(s, user);
 
         logger.info("Deleted " + mappingsDeleted + " mappings for season " + s.getName());
-        StandingsResponse standingsResponse = scrapingService.fetchStandings(yyyy);
+        createConferenceMappings(yyyy, s, user);
 
+        logger.info("For " + yyyy + " there are " + conferenceMappingRepository.count() + " teams");
+        LocalDateTime start = LocalDateTime.now();
+        Stream.iterate(s.getStartDate(), date -> !date.isAfter(s.getEndDate()), date -> date.plusDays(1)).forEach(
+                d -> {
+                    List<Game> games = fetchGames(d, s, user);
+
+                    updateGames(d, s, games);
+                }
+        );
+        LocalDateTime end = LocalDateTime.now();
+        auditRepository.save(new Audit(0L, "createSchedule", "%d games fetched".formatted(gameRepository.count()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
+    }
+
+    private void createConferenceMappings(int yyyy, Season s, User user) {
+        LocalDateTime start = LocalDateTime.now();
+        StandingsResponse standingsResponse = scrapingService.fetchStandings(yyyy);
         standingsResponse.children().forEach(cs -> {
             Conference c = findOrCreateConference(cs);
             cs.consolidatedStandings().forEach(se -> {
@@ -259,16 +289,17 @@ public class ScheduleService {
                 conferenceMappingRepository.save(mapping);
             });
         });
+        LocalDateTime end = LocalDateTime.now();
+        auditRepository.save(new Audit(0L, "createConferenceMappings", "%d standings fetched".formatted(standingsResponse.children().size()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
+    }
 
-        logger.info("For " + yyyy + " there are " + conferenceMappingRepository.count() + " teams");
-
-        Stream.iterate(s.getStartDate(), date -> !date.isAfter(s.getEndDate()), date -> date.plusDays(1)).forEach(
-                d -> {
-                    List<Game> games = fetchGames(d, s, user);
-
-                    updateGames(d, s, games);
-                }
-        );
+    private long deleteMappings(Season s, User user) {
+        LocalDateTime start = LocalDateTime.now();
+        long mappingsDeleted = conferenceMappingRepository.deleteBySeason(s);
+        LocalDateTime end = LocalDateTime.now();
+        auditRepository.save(new Audit(0L, "deleteMappings", "%d mappings deleted".formatted(mappingsDeleted), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
+        entityManager.flush();
+        return mappingsDeleted;
     }
 
     private void updateGames(LocalDate index, Season s, List<Game> games) {
@@ -356,11 +387,26 @@ public class ScheduleService {
     }
 
     public record ScheduleStatus(long numberOfTeams, long numberOfConferences, List<SeasonStatus> seasons) {
+
     }
 
     public record SeasonStatus(int year, long numberOfTeams, long numberOfConferences, long numberOfGames,
-                               LocalDate firstGameDate, LocalDate lastGameDate, LocalDate lastCompleteGameDate) {
+            LocalDate firstGameDate, LocalDate lastGameDate, LocalDate lastCompleteGameDate) {
+
     }
 
+    @Transactional
+    public int dropSeason(int seasonYear, User user) {
+        LocalDateTime start = LocalDateTime.now();
+        Season s = seasonRepository.findByYear(seasonYear).getFirst();
+        deleteMappings(s, user);
+        long gamesDeleted = gameRepository.deleteBySeason(s);
+        teamStatisticRepository.deleteBySeason(s);
+        seasonRepository.delete(s);
+        LocalDateTime end = LocalDateTime.now();
+        auditRepository.save(new Audit(0L, "dropSeason", "%d mappings deleted".formatted(gamesDeleted), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
+
+        return (int) gamesDeleted;
+    }
 
 }
