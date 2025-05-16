@@ -1,5 +1,6 @@
 package com.fijimf.deepfij.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,4 +11,7 @@ import com.fijimf.deepfij.model.statistics.TeamStatistic;
 @Repository
 public interface TeamStatisticRepository extends JpaRepository<TeamStatistic, Long> {
     List<TeamStatistic> findBySeasonIdAndStatisticTypeId(Long seasonId, Long statisticTypeId);
+    
+    List<TeamStatistic> findBySeasonIdAndStatisticTypeIdAndStatisticDate(
+            Long seasonId, Long statisticTypeId, LocalDate statisticDate);
 } 

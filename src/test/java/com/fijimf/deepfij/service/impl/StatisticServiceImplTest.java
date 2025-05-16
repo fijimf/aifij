@@ -145,6 +145,83 @@ class StatisticServiceImplTest {
         assertEquals(2, result.get(0).count()); // Should only count non-null values
     }
 
+    @Test
+    void getTopTeamsByDate_ShouldReturnTopTeamsWhenHigherIsBetter() {
+        // Arrange
+        testStatisticType.setIsHigherBetter(true);
+        when(statisticTypeRepository.findByName("testStat"))
+            .thenReturn(Optional.of(testStatisticType));
+        when(teamStatisticRepository.findBySeasonIdAndStatisticTypeIdAndStatisticDate(1L, 1L, testDate))
+            .thenReturn(testStatistics);
+
+        // Act
+        List<TeamStatistic> result = statisticService.getTopTeamsByDate(1L, "testStat", testDate, 3);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(3, result.size());
+        assertEquals(new BigDecimal("5.0"), result.get(0).getNumericValue());
+        assertEquals(new BigDecimal("4.0"), result.get(1).getNumericValue());
+        assertEquals(new BigDecimal("3.0"), result.get(2).getNumericValue());
+    }
+
+    @Test
+    void getTopTeamsByDate_ShouldReturnTopTeamsWhenLowerIsBetter() {
+        // Arrange
+        testStatisticType.setIsHigherBetter(false);
+        when(statisticTypeRepository.findByName("testStat"))
+            .thenReturn(Optional.of(testStatisticType));
+        when(teamStatisticRepository.findBySeasonIdAndStatisticTypeIdAndStatisticDate(1L, 1L, testDate))
+            .thenReturn(testStatistics);
+
+        // Act
+        List<TeamStatistic> result = statisticService.getTopTeamsByDate(1L, "testStat", testDate, 3);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(3, result.size());
+        assertEquals(new BigDecimal("1.0"), result.get(0).getNumericValue());
+        assertEquals(new BigDecimal("2.0"), result.get(1).getNumericValue());
+        assertEquals(new BigDecimal("3.0"), result.get(2).getNumericValue());
+    }
+
+    @Test
+    void getTopTeamsByDate_ShouldHandleNullValues() {
+        // Arrange
+        testStatisticType.setIsHigherBetter(true);
+        List<TeamStatistic> statisticsWithNull = Arrays.asList(
+            createTeamStatistic(1L, testDate, new BigDecimal("1.0")),
+            createTeamStatistic(2L, testDate, null),
+            createTeamStatistic(3L, testDate, new BigDecimal("3.0"))
+        );
+
+        when(statisticTypeRepository.findByName("testStat"))
+            .thenReturn(Optional.of(testStatisticType));
+        when(teamStatisticRepository.findBySeasonIdAndStatisticTypeIdAndStatisticDate(1L, 1L, testDate))
+            .thenReturn(statisticsWithNull);
+
+        // Act
+        List<TeamStatistic> result = statisticService.getTopTeamsByDate(1L, "testStat", testDate, 2);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals(new BigDecimal("3.0"), result.get(0).getNumericValue());
+        assertEquals(new BigDecimal("1.0"), result.get(1).getNumericValue());
+    }
+
+    @Test
+    void getTopTeamsByDate_ShouldThrowExceptionForInvalidStatisticType() {
+        // Arrange
+        when(statisticTypeRepository.findByName("invalidStat"))
+            .thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () ->
+            statisticService.getTopTeamsByDate(1L, "invalidStat", testDate, 5)
+        );
+    }
+
     private TeamStatistic createTeamStatistic(Long id, LocalDate date, BigDecimal value) {
         TeamStatistic stat = new TeamStatistic();
         stat.setId(id);

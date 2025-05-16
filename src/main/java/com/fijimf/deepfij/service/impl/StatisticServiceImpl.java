@@ -1,20 +1,24 @@
 package com.fijimf.deepfij.service.impl;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.fijimf.deepfij.model.statistics.StatisticSummary;
 import com.fijimf.deepfij.model.statistics.StatisticType;
 import com.fijimf.deepfij.model.statistics.TeamStatistic;
 import com.fijimf.deepfij.repository.StatisticTypeRepository;
 import com.fijimf.deepfij.repository.TeamStatisticRepository;
 import com.fijimf.deepfij.service.StatisticService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class StatisticServiceImpl implements StatisticService {
@@ -97,5 +101,26 @@ public class StatisticServiceImpl implements StatisticService {
         
         return lowerValue.add(upperValue.subtract(lowerValue).multiply(BigDecimal.valueOf(weight)))
                 .setScale(4, RoundingMode.HALF_UP);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TeamStatistic> getTopTeamsByDate(Long seasonId, String statisticTypeName, LocalDate date, int limit) {
+        StatisticType statisticType = statisticTypeRepository.findByName(statisticTypeName)
+                .orElseThrow(() -> new IllegalArgumentException("Statistic type not found: " + statisticTypeName));
+
+        List<TeamStatistic> statistics = teamStatisticRepository.findBySeasonIdAndStatisticTypeIdAndStatisticDate(
+                seasonId, statisticType.getId(), date);
+
+        return statistics.stream()
+                .filter(stat -> stat.getNumericValue() != null)
+                .sorted((a, b) -> {
+                    int comparison = a.getNumericValue().compareTo(b.getNumericValue());
+                    return Boolean.TRUE.equals(statisticType.getIsHigherBetter()) ? 
+                            -comparison : // Higher is better, so reverse the comparison
+                            comparison;   // Lower is better, so keep the comparison
+                })
+                .limit(limit)
+                .collect(Collectors.toList());
     }
 } 
