@@ -57,7 +57,7 @@ public record RawTeam(
         } else {
             team.setSlug(this.slug());
         }
-        this.logos().stream().filter(l -> l.rel().contains("primary_logo_on_white_color")).forEach(l -> team.setLogoUrl(l.href()));
+        this.logos().stream().filter(l -> l.rel().contains("default")).forEach(l -> team.setLogoUrl(l.href()));
     }
 
     public static String fixColor(String color) {

@@ -7,10 +7,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.fijimf.deepfij.auth.util.JwtUtil;
 import com.fijimf.deepfij.model.User;
@@ -55,7 +52,7 @@ public class ScheduleAdminController {
         return ResponseEntity.ok(conferences);
     }
 
-    @GetMapping("/dropConferences")
+    @PostMapping("/dropConferences")
     public ResponseEntity<Integer> dropConferences(HttpServletRequest httpServletRequest) {
         User user = getUser(httpServletRequest);
         int count = scheduleService.dropConferences(user);
@@ -69,7 +66,7 @@ public class ScheduleAdminController {
         return ResponseEntity.ok(teams);
     }
 
-    @GetMapping("/dropTeams")
+    @PostMapping("/dropTeams")
     public ResponseEntity<Integer> dropTeams(HttpServletRequest httpServletRequest) {
         User user = getUser(httpServletRequest);
         int count = scheduleService.dropTeams(user);
@@ -83,7 +80,7 @@ public class ScheduleAdminController {
         return ResponseEntity.ok(scheduleService.getStatus());
     }
 
-    @GetMapping("/dropSeason")
+    @PostMapping("/dropSeason")
     public ResponseEntity<Integer> dropSeason(HttpServletRequest httpServletRequest, @RequestParam int seasonYear) {
         User user = getUser(httpServletRequest);
         int count = scheduleService.dropSeason(seasonYear, user);
