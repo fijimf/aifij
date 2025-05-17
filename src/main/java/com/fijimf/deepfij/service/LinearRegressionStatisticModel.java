@@ -38,7 +38,7 @@ public class LinearRegressionStatisticModel implements StatisticalModel {
 
     @Override
     public List<TeamStatistic> generate(Season season) {
-        StatisticType type = statisticTypeService.findOrCreateStatisticType("LINEAR_REGRESSION", "LINEAR_REGRESSION", "Linear Regression", true);
+        StatisticType type = statisticTypeService.findOrCreateStatisticType("LINEAR_REGRESSION", "LINEAR_REGRESSION", "Linear Regression", true, 4);
         String url = String.format(apiUrl+"/api/rankings/lse?year=%d", season.getYear());
         JsonNode response = restTemplate.getForObject(url, JsonNode.class);
         List<TeamStatistic> statistics = new ArrayList<>();

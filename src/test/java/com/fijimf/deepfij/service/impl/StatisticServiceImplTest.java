@@ -20,8 +20,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.fijimf.deepfij.model.statistics.StatisticSummary;
 import com.fijimf.deepfij.model.statistics.StatisticType;
 import com.fijimf.deepfij.model.statistics.TeamStatistic;
-import com.fijimf.deepfij.repository.StatisticTypeRepository;
-import com.fijimf.deepfij.repository.TeamStatisticRepository;
+import com.fijimf.deepfij.repo.StatisticTypeRepository;
+import com.fijimf.deepfij.repo.TeamStatisticRepository;
 
 @ExtendWith(MockitoExtension.class)
 class StatisticServiceImplTest {

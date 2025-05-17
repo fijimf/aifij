@@ -1,17 +1,10 @@
 package com.fijimf.deepfij.model.statistics;
 
-import java.util.Set;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+
+import java.util.Set;
 
 @Entity
 @Table(name = "statistic_type")
@@ -35,6 +28,9 @@ public class StatisticType {
 
     @Column(name = "is_higher_better")
     private Boolean isHigherBetter = true;
+
+    @Column(name = "decimal_places")
+    private int decimalPlaces = 2;
 
     @OneToMany(mappedBy = "statisticType", fetch = FetchType.LAZY)
     private Set<TeamStatistic> teamStatistics;
@@ -90,5 +86,13 @@ public class StatisticType {
 
     public void setTeamStatistics(Set<TeamStatistic> teamStatistics) {
         this.teamStatistics = teamStatistics;
+    }
+
+    public int getDecimalPlaces() {
+        return decimalPlaces;
+    }
+
+    public void setDecimalPlaces(int decimalPlaces) {
+        this.decimalPlaces = decimalPlaces;
     }
 } 

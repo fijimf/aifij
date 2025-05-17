@@ -3,12 +3,15 @@ package com.fijimf.deepfij.service.impl;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.fijimf.deepfij.model.dto.StatSummaryPage;
+import com.fijimf.deepfij.model.dto.TeamDTO;
+import com.fijimf.deepfij.model.dto.TeamStatisticStub;
+import com.fijimf.deepfij.model.schedule.Game;
+import com.fijimf.deepfij.model.schedule.Season;
+import com.fijimf.deepfij.repo.SeasonRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,8 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fijimf.deepfij.model.statistics.StatisticSummary;
 import com.fijimf.deepfij.model.statistics.StatisticType;
 import com.fijimf.deepfij.model.statistics.TeamStatistic;
-import com.fijimf.deepfij.repository.StatisticTypeRepository;
-import com.fijimf.deepfij.repository.TeamStatisticRepository;
+import com.fijimf.deepfij.repo.StatisticTypeRepository;
+import com.fijimf.deepfij.repo.TeamStatisticRepository;
 import com.fijimf.deepfij.service.StatisticService;
 
 @Service
@@ -29,8 +32,10 @@ public class StatisticServiceImpl implements StatisticService {
     @Autowired
     private StatisticTypeRepository statisticTypeRepository;
 
+    @Autowired
+    private SeasonRepository seasonRepository;
+
     @Override
-    @Transactional(readOnly = true)
     public List<StatisticSummary> getStatisticSummariesBySeasonAndType(Long seasonId, String statisticTypeName) {
         StatisticType statisticType = statisticTypeRepository.findByName(statisticTypeName)
                 .orElseThrow(() -> new IllegalArgumentException("Statistic type not found: " + statisticTypeName));
@@ -104,7 +109,6 @@ public class StatisticServiceImpl implements StatisticService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<TeamStatistic> getTopTeamsByDate(Long seasonId, String statisticTypeName, LocalDate date, int limit) {
         StatisticType statisticType = statisticTypeRepository.findByName(statisticTypeName)
                 .orElseThrow(() -> new IllegalArgumentException("Statistic type not found: " + statisticTypeName));
@@ -112,15 +116,38 @@ public class StatisticServiceImpl implements StatisticService {
         List<TeamStatistic> statistics = teamStatisticRepository.findBySeasonIdAndStatisticTypeIdAndStatisticDate(
                 seasonId, statisticType.getId(), date);
 
-        return statistics.stream()
+        List<TeamStatistic> teamStatisticList = statistics.stream()
                 .filter(stat -> stat.getNumericValue() != null)
                 .sorted((a, b) -> {
                     int comparison = a.getNumericValue().compareTo(b.getNumericValue());
-                    return Boolean.TRUE.equals(statisticType.getIsHigherBetter()) ? 
+                    return Boolean.TRUE.equals(statisticType.getIsHigherBetter()) ?
                             -comparison : // Higher is better, so reverse the comparison
                             comparison;   // Lower is better, so keep the comparison
                 })
-                .limit(limit)
                 .collect(Collectors.toList());
+        return limit<=0?teamStatisticList:teamStatisticList.subList(0, limit);
+    }
+
+    public StatSummaryPage getStatSummaryPage(int seasonYear, String statisticTypeName) {
+        Season season = seasonRepository.findByYear(seasonYear).stream().findFirst().orElseThrow(() -> new IllegalArgumentException("Season not found: " + seasonYear));
+        StatisticType statisticType = statisticTypeRepository.findByName(statisticTypeName)
+                 .orElseThrow(() -> new IllegalArgumentException("Statistic type not found: " + statisticTypeName));
+        List<TeamStatistic> topTeamsByDate = getTopTeamsByDate(season.getId(), statisticTypeName, season.getGames().stream().filter(Game::isComplete).map(Game::getDate).toList().getLast(), 0);
+        List<TeamStatisticStub> teamStatisticStubs = new ArrayList<>();
+        BigDecimal last=null;
+        for(int i=0, rk=0;i<topTeamsByDate.size();i++){
+            TeamStatistic teamStatistic = topTeamsByDate.get(i);
+            if (i==0) {
+                rk=1;
+            } else if (last.compareTo(teamStatistic.getNumericValue())!=0) {
+                rk =i+1;
+            }
+            last=teamStatistic.getNumericValue();
+            teamStatisticStubs.add(TeamStatisticStub.fromTeamStatistic( teamStatistic, rk));
+
+        }
+        List<StatisticSummary> statisticSummaryList = getStatisticSummariesBySeasonAndType(season.getId(), statisticTypeName);
+        return new StatSummaryPage(statisticType.getName(), statisticType.getDescription(), statisticType.getIsHigherBetter(), statisticType.getDecimalPlaces(), seasonYear, teamStatisticStubs, statisticSummaryList);
+
     }
 } 

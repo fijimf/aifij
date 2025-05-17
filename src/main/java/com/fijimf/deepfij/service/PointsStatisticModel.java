@@ -32,12 +32,12 @@ public class PointsStatisticModel implements StatisticalModel {
     @Override
     public List<TeamStatistic> generate(Season season) {
 
-        StatisticType pointsForAvg = statisticTypeService.findOrCreateStatisticType("POINTS_FOR_AVG", "POINTS_FOR_AVG", "Average points for", true);
-        StatisticType pointsForStdDev = statisticTypeService.findOrCreateStatisticType("POINTS_FOR_SD", "POINTS_FOR_SD", "Standard deviation points for", false);
-        StatisticType pointsAgainstAvg = statisticTypeService.findOrCreateStatisticType("POINTS_AGAINST_AVG", "POINTS_AGAINST_AVG", "Average points against", false);
-        StatisticType pointsAgainstStdDev = statisticTypeService.findOrCreateStatisticType("POINTS_AGAINST_SD", "POINTS_AGAINST_SD", "Standard deviation of points against", false);
-        StatisticType marginAvg = statisticTypeService.findOrCreateStatisticType("MARGIN_AVG", "MARGIN_AVG", "Average margin", true);
-        StatisticType marginStdDev = statisticTypeService.findOrCreateStatisticType("MARGIN_SD", "MARGIN_SD", "Standard deviation of margin", false);
+        StatisticType pointsForAvg = statisticTypeService.findOrCreateStatisticType("POINTS_FOR_AVG", "POINTS_FOR_AVG", "Average points for", true, 2);
+        StatisticType pointsForStdDev = statisticTypeService.findOrCreateStatisticType("POINTS_FOR_SD", "POINTS_FOR_SD", "Standard deviation points for", false, 2);
+        StatisticType pointsAgainstAvg = statisticTypeService.findOrCreateStatisticType("POINTS_AGAINST_AVG", "POINTS_AGAINST_AVG", "Average points against", false,2);
+        StatisticType pointsAgainstStdDev = statisticTypeService.findOrCreateStatisticType("POINTS_AGAINST_SD", "POINTS_AGAINST_SD", "Standard deviation of points against", false,2);
+        StatisticType marginAvg = statisticTypeService.findOrCreateStatisticType("MARGIN_AVG", "MARGIN_AVG", "Average margin", true,2);
+        StatisticType marginStdDev = statisticTypeService.findOrCreateStatisticType("MARGIN_SD", "MARGIN_SD", "Standard deviation of margin", false,2);
 
         // Get all games for the season ordered by date
         List<Game> games = gameRepository.findBySeasonOrderByDateAsc(season);

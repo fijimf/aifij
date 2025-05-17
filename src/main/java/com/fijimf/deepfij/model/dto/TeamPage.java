@@ -58,21 +58,6 @@ public record TeamPage(Integer season, TeamDTO team, Map<String, Record> records
 
     }
 
-    public record TeamDTO(Long id, String name, String longName, String nickname, String logoUrl, String primaryColor,
-                          String secondaryColor, String slug) {
-        public static TeamDTO fromTeam(Team team) {
-            return new TeamDTO(
-                    team.getId(),
-                    team.getName(),
-                    team.getLongName(),
-                    team.getNickname(),
-                    team.getLogoUrl(),
-                    team.getPrimaryColor(),
-                    team.getSecondaryColor(),
-                    team.getSlug());
-        }
-    }
-
     public record ConferenceDTO(Long id, String name, String shortName, String logoUrl, List<StandingDTO> standings) {
     }
 

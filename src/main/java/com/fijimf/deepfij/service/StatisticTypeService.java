@@ -11,7 +11,7 @@ public class StatisticTypeService {
     @Autowired
     private StatisticTypeRepository statisticTypeRepository;
     
-    public StatisticType findOrCreateStatisticType(String code, String name, String description, boolean isHigherBetter) {
+    public StatisticType findOrCreateStatisticType(String code, String name, String description, boolean isHigherBetter, int decimalPlaces) {
         return statisticTypeRepository.findByCode(code)
                 .orElseGet(() -> {
                     StatisticType type = new StatisticType();
@@ -19,6 +19,7 @@ public class StatisticTypeService {
                     type.setName(name);
                     type.setDescription(description);
                     type.setIsHigherBetter(isHigherBetter);
+                    type.setDecimalPlaces(decimalPlaces);
                     return statisticTypeRepository.save(type);
                 });
     }

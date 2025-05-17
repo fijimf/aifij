@@ -33,11 +33,11 @@ public class WonLostStatisticModel implements StatisticalModel {
     }
     @Override
     public List<TeamStatistic> generate(Season season) {
-        StatisticType winsType = statisticTypeService.findOrCreateStatisticType("WINS", "WINS", "Wins", true);
-        StatisticType lossesType = statisticTypeService.findOrCreateStatisticType("LOSSES", "LOSSES", "Losses", false);
-        StatisticType winStreakType = statisticTypeService.findOrCreateStatisticType("WIN_STREAK", "WIN_STREAK", "Winning Streak", true);
-        StatisticType lossStreakType = statisticTypeService.findOrCreateStatisticType("LOSS_STREAK", "LOSS_STREAK", "Losing Streak", false);
-        StatisticType winningPctType = statisticTypeService.findOrCreateStatisticType("WIN_PCT", "WIN_PCT", "Winning Pct", true);
+        StatisticType winsType = statisticTypeService.findOrCreateStatisticType("WINS", "WINS", "Wins", true,0);
+        StatisticType lossesType = statisticTypeService.findOrCreateStatisticType("LOSSES", "LOSSES", "Losses", false,0);
+        StatisticType winStreakType = statisticTypeService.findOrCreateStatisticType("WIN_STREAK", "WIN_STREAK", "Winning Streak", true,0);
+        StatisticType lossStreakType = statisticTypeService.findOrCreateStatisticType("LOSS_STREAK", "LOSS_STREAK", "Losing Streak", false,0);
+        StatisticType winningPctType = statisticTypeService.findOrCreateStatisticType("WIN_PCT", "WIN_PCT", "Winning Pct", true, 4);
 
         // Get all games for the season ordered by date
         List<Game> games = gameRepository.findBySeasonOrderByDateAsc(season);
