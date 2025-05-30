@@ -2,6 +2,7 @@ package com.fijimf.deepfij.controller;
 
 import java.util.List;
 
+import com.fijimf.deepfij.service.TournamentBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,8 @@ public class ScheduleController {
     private SeasonRepository seasonRepository; // Inject SeasonRepository
     @Autowired
     private TeamRepository teamRepository;
+    @Autowired
+    private TournamentBuilder tournamentBuilder;
 
     @Cacheable(value = "teamPages", key = "#year + '-' + #teamId")
     @GetMapping("/team/{teamId}")
@@ -55,6 +58,21 @@ public class ScheduleController {
         Season season = seasonRepository.findFirstByOrderByYearDesc(); // Fetch most recent season
         if (season == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok(TeamsPage.create(teams, season));
+
+    }
+
+    @GetMapping("/tournament")
+    public ResponseEntity<TournamentBuilder.Tournament> getTournament( @RequestParam(required = false) Integer year) {
+        Season season;
+        if (year == null) {
+            season = seasonRepository.findFirstByOrderByYearDesc(); // Fetch most recent season
+        } else {
+            season = seasonRepository.findByYear(year).getFirst(); // Fetch season by year
+        }
+        if (season == null) return ResponseEntity.notFound().build();
+
+       return ResponseEntity.ok(tournamentBuilder.build(season));
+
 
     }
 }
