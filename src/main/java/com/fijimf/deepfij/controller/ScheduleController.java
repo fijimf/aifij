@@ -3,6 +3,7 @@ package com.fijimf.deepfij.controller;
 import java.util.List;
 
 import com.fijimf.deepfij.service.TournamentBuilder;
+import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,12 +25,16 @@ import com.fijimf.deepfij.repo.TeamRepository;
 public class ScheduleController {
     private static final Logger logger = LoggerFactory.getLogger(ScheduleController.class);
 
+    private final SeasonRepository seasonRepository; // Inject SeasonRepository
+    private final TeamRepository teamRepository;
+    private final TournamentBuilder tournamentBuilder;
+
     @Autowired
-    private SeasonRepository seasonRepository; // Inject SeasonRepository
-    @Autowired
-    private TeamRepository teamRepository;
-    @Autowired
-    private TournamentBuilder tournamentBuilder;
+    public ScheduleController(SeasonRepository seasonRepository, TeamRepository teamRepository, TournamentBuilder tournamentBuilder) {
+        this.seasonRepository = seasonRepository;
+        this.teamRepository = teamRepository;
+        this.tournamentBuilder = tournamentBuilder;
+    }
 
     @Cacheable(value = "teamPages", key = "#year + '-' + #teamId")
     @GetMapping("/team/{teamId}")

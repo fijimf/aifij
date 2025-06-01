@@ -6,6 +6,7 @@ import com.fijimf.deepfij.model.schedule.Season;
 import com.fijimf.deepfij.model.schedule.Team;
 import com.fijimf.deepfij.repo.SeasonRepository;
 import com.fijimf.deepfij.service.impl.StatisticServiceImpl;
+import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,10 +23,14 @@ import java.util.List;
 public class StatsController {
     private static final Logger logger = LoggerFactory.getLogger(StatsController.class);
 
+    private final StatisticServiceImpl statisticService; // Inject SeasonRepository
+    private final SeasonRepository seasonRepository; // Inject SeasonRepository
+
     @Autowired
-    private StatisticServiceImpl statisticService; // Inject SeasonRepository
-    @Autowired
-    private SeasonRepository seasonRepository; // Inject SeasonRepository
+    public StatsController(StatisticServiceImpl statisticService, SeasonRepository seasonRepository) {
+        this.statisticService = statisticService;
+        this.seasonRepository = seasonRepository;
+    }
 
 
     @GetMapping("/stats/{statName}/summary")

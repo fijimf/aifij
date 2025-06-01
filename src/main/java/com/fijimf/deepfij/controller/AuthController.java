@@ -37,7 +37,8 @@ public class AuthController {
 
     private final UserService userService;
 
-    public AuthController(@Autowired AuthenticationManager authenticationManager, @Autowired JwtUtil jwtUtil, @Autowired UserDetailsService userDetailsService, @Autowired UserService userService) {
+    @Autowired
+    public AuthController( AuthenticationManager authenticationManager, JwtUtil jwtUtil, UserDetailsService userDetailsService, UserService userService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;

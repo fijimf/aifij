@@ -1,39 +1,40 @@
 package com.fijimf.deepfij.service.impl;
 
+import com.fijimf.deepfij.model.dto.StatSummaryPage;
+import com.fijimf.deepfij.model.dto.TeamStatisticStub;
+import com.fijimf.deepfij.model.schedule.Game;
+import com.fijimf.deepfij.model.schedule.Season;
+import com.fijimf.deepfij.model.statistics.StatisticSummary;
+import com.fijimf.deepfij.model.statistics.StatisticType;
+import com.fijimf.deepfij.model.statistics.TeamStatistic;
+import com.fijimf.deepfij.repo.SeasonRepository;
+import com.fijimf.deepfij.repo.StatisticTypeRepository;
+import com.fijimf.deepfij.repo.TeamStatisticRepository;
+import com.fijimf.deepfij.service.StatisticService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.fijimf.deepfij.model.dto.StatSummaryPage;
-import com.fijimf.deepfij.model.dto.TeamDTO;
-import com.fijimf.deepfij.model.dto.TeamStatisticStub;
-import com.fijimf.deepfij.model.schedule.Game;
-import com.fijimf.deepfij.model.schedule.Season;
-import com.fijimf.deepfij.repo.SeasonRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.fijimf.deepfij.model.statistics.StatisticSummary;
-import com.fijimf.deepfij.model.statistics.StatisticType;
-import com.fijimf.deepfij.model.statistics.TeamStatistic;
-import com.fijimf.deepfij.repo.StatisticTypeRepository;
-import com.fijimf.deepfij.repo.TeamStatisticRepository;
-import com.fijimf.deepfij.service.StatisticService;
-
 @Service
 public class StatisticServiceImpl implements StatisticService {
 
-    @Autowired
-    private TeamStatisticRepository teamStatisticRepository;
+    private final TeamStatisticRepository teamStatisticRepository;
+
+    private final StatisticTypeRepository statisticTypeRepository;
+
+    private final SeasonRepository seasonRepository;
 
     @Autowired
-    private StatisticTypeRepository statisticTypeRepository;
-
-    @Autowired
-    private SeasonRepository seasonRepository;
+    public StatisticServiceImpl(TeamStatisticRepository teamStatisticRepository, StatisticTypeRepository statisticTypeRepository, SeasonRepository seasonRepository) {
+        this.teamStatisticRepository = teamStatisticRepository;
+        this.statisticTypeRepository = statisticTypeRepository;
+        this.seasonRepository = seasonRepository;
+    }
 
     @Override
     public List<StatisticSummary> getStatisticSummariesBySeasonAndType(Long seasonId, String statisticTypeName) {
@@ -66,7 +67,7 @@ public class StatisticServiceImpl implements StatisticService {
         }
 
         int count = values.size();
-        BigDecimal min = values.get(0);
+        BigDecimal min = values.getFirst();
         BigDecimal max = values.get(count - 1);
         
         // Calculate quartiles
