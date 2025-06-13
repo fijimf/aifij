@@ -433,4 +433,24 @@ public class Game {
     public String getSpreadDescription() {
         return spread == null ? "" : "%s%+4.1f".formatted(homeTeam.getAbbreviation(), spread);
     }
+
+    public Conference getHomeTeamConference() {
+        for (ConferenceMapping cm : this.season.getConferenceMappings()) {
+            if (cm.getTeam().equals(this.homeTeam)) {
+                return cm.getConference();
+            }
+        }
+        throw new IllegalStateException("Home team " + this.homeTeam.getName() + " is not mapped to a conference");
+    }
+    public Conference getAwayTeamConference() {
+        for (ConferenceMapping cm : this.season.getConferenceMappings()) {
+            if (cm.getTeam().equals(this.awayTeam)) {
+                return cm.getConference();
+            }
+        }
+        throw new IllegalStateException("Away team " + this.awayTeam.getName() + " is not mapped to a conference");
+    }
+
+    public boolean isConferenceGame(){
+        return getHomeTeamConference().equals(getAwayTeamConference()); }
 }

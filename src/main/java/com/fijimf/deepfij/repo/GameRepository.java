@@ -22,5 +22,7 @@ public interface GameRepository extends JpaRepository<Game, Long> {
     @Query("SELECT g FROM Game g WHERE g.season = ?1 AND g.homeTeamSeed IS NOT NULL AND g.awayTeamSeed IS NOT NULL ORDER BY g.date DESC")
     List<Game> findTournamentGamesBySeason(Season season);
 
+    List<Game> findBySeasonYear(int year);
+
 
 }
