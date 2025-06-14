@@ -95,7 +95,7 @@ public class ScheduleAdminController {
         return ResponseEntity.ok(games);
     }
 
-    @GetMapping("/runModel")
+    @GetMapping("/runStatModel")
     public ResponseEntity<Map<LocalDate,Integer>> runModel(@RequestParam int seasonYear, @RequestParam String model) {
         List<TeamStatistic> teamStatistics = statisticalService.generateStatistics(Integer.toString(seasonYear), model);
         Map<LocalDate, Integer> countByDate = teamStatistics
@@ -105,6 +105,11 @@ public class ScheduleAdminController {
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().size()));
         return ResponseEntity.ok(countByDate);
+    }
+
+    @GetMapping("/listStatModels")
+    public ResponseEntity<List<String>> listStatModels() {
+        return ResponseEntity.ok(statisticalService.modelKeys());
     }
 
     private User getUser(HttpServletRequest request) {
