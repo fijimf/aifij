@@ -31,7 +31,7 @@ public class Conference {
     private String logoUrl;
 
     @Size(max = 50)
-    @Column(name = "espn_id")
+    @Column(name = "espn_id", nullable = false, unique = true)
     private String espnId;
 
     // Default constructor

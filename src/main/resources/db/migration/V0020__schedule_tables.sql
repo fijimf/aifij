@@ -3,7 +3,7 @@ CREATE TABLE conference (
     name VARCHAR(100) NOT NULL,
     short_name VARCHAR(50) NOT NULL,
     logo_url VARCHAR(255),
-    espn_id VARCHAR(50),
+    espn_id VARCHAR(50) NOT NULL,
     UNIQUE(name),
     UNIQUE(short_name)
 );
@@ -64,7 +64,8 @@ CREATE TABLE game (
     spread FLOAT,
     over_under FLOAT,
     home_money_line INTEGER,
-    away_money_line INTEGER
+    away_money_line INTEGER,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT game_teams_different CHECK (home_team_id != away_team_id)
 );

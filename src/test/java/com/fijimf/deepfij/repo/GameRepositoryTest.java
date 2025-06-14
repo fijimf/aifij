@@ -17,7 +17,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -255,6 +257,7 @@ public class GameRepositoryTest {
         game.setStatus("scheduled");
         game.setLocation("Test Arena");
         game.setNeutralSite(false);
+        game.setUpdatedAt(Timestamp.valueOf(LocalDateTime.now()));
         return game;
     }
 }

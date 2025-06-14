@@ -1,50 +1,34 @@
 package com.fijimf.deepfij.service;
 
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fijimf.deepfij.model.User;
-import com.fijimf.deepfij.model.schedule.Audit;
-import com.fijimf.deepfij.model.schedule.Conference;
-import com.fijimf.deepfij.model.schedule.ConferenceMapping;
-import com.fijimf.deepfij.model.schedule.Game;
-import com.fijimf.deepfij.model.schedule.Season;
-import com.fijimf.deepfij.model.schedule.Team;
+import com.fijimf.deepfij.model.schedule.*;
 import com.fijimf.deepfij.model.scraping.conference.RawConference;
 import com.fijimf.deepfij.model.scraping.scoreboard.ScoreboardResponse;
 import com.fijimf.deepfij.model.scraping.standings.ConferenceStanding;
 import com.fijimf.deepfij.model.scraping.standings.StandingsEntry;
 import com.fijimf.deepfij.model.scraping.standings.StandingsResponse;
 import com.fijimf.deepfij.model.scraping.team.RawTeam;
-import com.fijimf.deepfij.repo.AuditRepository;
-import com.fijimf.deepfij.repo.ConferenceMappingRepository;
-import com.fijimf.deepfij.repo.ConferenceRepository;
-import com.fijimf.deepfij.repo.GameRepository;
-import com.fijimf.deepfij.repo.SeasonRepository;
-import com.fijimf.deepfij.repo.TeamRepository;
-import com.fijimf.deepfij.repo.TeamStatisticRepository;
-
+import com.fijimf.deepfij.repo.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class ScheduleService {
@@ -229,8 +213,8 @@ public class ScheduleService {
     private Season findOrCreate(int yyyy, User user) {
         List<Season> seasonList = seasonRepository.findByYear(yyyy);
         if (!seasonList.isEmpty()) {
-            return seasonList.getFirst(); 
-        }else {
+            return seasonList.getFirst();
+        } else {
             LocalDateTime start = LocalDateTime.now();
             Season season = new Season();
             season.setId(0L);
@@ -365,8 +349,6 @@ public class ScheduleService {
     }
 
     public ScheduleStatus getStatus() {
-        long numTeams = teamRepository.count();
-        long numConferences = conferenceRepository.count();
         List<SeasonStatus> seasons = seasonRepository.findAll().stream().map(s -> {
             int year = s.getYear();
             List<ConferenceMapping> mappings = conferenceMappingRepository.findBySeason(s);
@@ -377,22 +359,43 @@ public class ScheduleService {
             LocalDate first = games.getFirst().getDate();
             LocalDate last = games.getLast().getDate();
             LocalDate lastComplete = games.stream().filter(Game::isComplete).map(Game::getDate).toList().getLast();
-            return new SeasonStatus(year, seasonTeams, seasonConferences, seasonGames, first, last, lastComplete);
+            Timestamp lastUpdated = games.stream().map(Game::getUpdatedAt).max(Comparator.naturalOrder()).orElse(null);
+            return new SeasonStatus(year, seasonTeams, seasonConferences, seasonGames, first, last, lastComplete, lastUpdated);
         }).toList();
-        return new ScheduleStatus(numTeams, numConferences, seasons);
+        return new ScheduleStatus(getTeamStatus(), getConferenceStatus(), seasons);
+    }
+
+    private ConferenceStatus getConferenceStatus() {
+        long numConferences = conferenceRepository.count();
+        long missingLogo = conferenceRepository.countByLogoUrlIsNull();
+        return new ConferenceStatus(numConferences, missingLogo > 0 ? "Missing logo for " + missingLogo + " conferences." : "OK");
+    }
+
+    private TeamStatus getTeamStatus() {
+        long numTeams = teamRepository.count();
+        long missingLogo = teamRepository.countByLogoUrlIsNull();
+        long missingColor = teamRepository.countByPrimaryColorIsNull();
+        String badData = (missingColor > 0 ? "Missing color for " + missingColor + " teams.  " : "") +
+                (missingLogo > 0 ? "Missing logo for " + missingLogo + " teams." : "");
+        return new TeamStatus(numTeams, StringUtils.isNotBlank(badData) ? badData : "OK");
     }
 
     public List<Game> fetchGames(int seasonYear, LocalDate localDate, User user) {
         return fetchGames(localDate, seasonRepository.findByYear(seasonYear).getFirst(), user);
     }
 
-    public record ScheduleStatus(long numberOfTeams, long numberOfConferences, List<SeasonStatus> seasons) {
+    public record ScheduleStatus(TeamStatus teamStatus, ConferenceStatus conferenceStatus, List<SeasonStatus> seasons) {
 
     }
 
-    public record SeasonStatus(int year, long numberOfTeams, long numberOfConferences, long numberOfGames,
-            LocalDate firstGameDate, LocalDate lastGameDate, LocalDate lastCompleteGameDate) {
+    public record TeamStatus(long numberOfTeams, String teamStatus) {
+    }
 
+    public record ConferenceStatus(long numberOfConferences, String conferenceStatus) {
+    }
+
+    public record SeasonStatus(int year, long numberOfTeams, long numberOfConferences, long numberOfGames,
+                               LocalDate firstGameDate, LocalDate lastGameDate, LocalDate lastCompleteGameDate, Timestamp lastUpdated) {
     }
 
     @Transactional

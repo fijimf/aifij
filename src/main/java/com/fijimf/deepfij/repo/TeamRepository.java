@@ -11,4 +11,7 @@ public interface TeamRepository  extends JpaRepository<Team, Long> {
     List<Team> findByEspnId(String id);
 
     Team findByAbbreviation(String key);
+    Long countByPrimaryColorIsNull();
+    Long countByLogoUrlIsNull();
+    Long countBy();
 }

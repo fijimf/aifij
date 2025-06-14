@@ -17,4 +17,6 @@ public interface ConferenceRepository extends JpaRepository<Conference, Long> {
     @Query("DELETE FROM Conference c")
     int delete();
 
+    long countByLogoUrlIsNull();
+
 }

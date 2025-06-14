@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Objects;
@@ -82,6 +83,9 @@ public class Game {
 
     @Column(name = "away_money_line")
     private Integer awayMoneyLine;
+
+    @Column(name = "updated_at", nullable = false)
+    private Timestamp updatedAt;
 
     // Default constructor
     public Game() {
@@ -248,6 +252,14 @@ public class Game {
         this.awayMoneyLine = awayMoneyLine;
     }
 
+    public Timestamp getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Timestamp updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     public boolean isComplete() {
         return homeScore != null && awayScore != null && homeScore > 0 && awayScore > 0;
     }
@@ -317,6 +329,7 @@ public class Game {
             needsUpdate = true;
         }
         if (needsUpdate) {
+            fromDb.updatedAt = new Timestamp(System.currentTimeMillis());
             return fromDb;
         } else {
             return null;
