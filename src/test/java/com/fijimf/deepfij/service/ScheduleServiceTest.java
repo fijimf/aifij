@@ -215,10 +215,7 @@ class ScheduleServiceTest {
         // Arrange
         when(seasonRepository.findAll()).thenReturn(new ArrayList<>());
         when(teamRepository.count()).thenReturn(0L);
-        when(teamRepository.countByLogoUrlIsNull()).thenReturn(0L);
-        when(teamRepository.countByPrimaryColorIsNull()).thenReturn(0L);
         when(conferenceRepository.count()).thenReturn(0L);
-        when(conferenceRepository.countByLogoUrlIsNull()).thenReturn(0L);
 
         // Act
         ScheduleStatus status = scheduleService.getStatus();
@@ -229,12 +226,12 @@ class ScheduleServiceTest {
         // Verify TeamStatus
         TeamStatus teamStatus = status.teamStatus();
         assertEquals(0L, teamStatus.numberOfTeams());
-        assertEquals("OK", teamStatus.teamStatus());
+        assertEquals("No teams.", teamStatus.teamStatus());
 
         // Verify ConferenceStatus
         ConferenceStatus conferenceStatus = status.conferenceStatus();
         assertEquals(0L, conferenceStatus.numberOfConferences());
-        assertEquals("OK", conferenceStatus.conferenceStatus());
+        assertEquals("No conferences.", conferenceStatus.conferenceStatus());
 
         // Verify SeasonStatus
         List<SeasonStatus> seasonStatuses = status.seasons();

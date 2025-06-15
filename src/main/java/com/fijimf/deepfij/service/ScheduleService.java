@@ -365,19 +365,27 @@ public class ScheduleService {
         return new ScheduleStatus(getTeamStatus(), getConferenceStatus(), seasons);
     }
 
-    private ConferenceStatus getConferenceStatus() {
+    public ConferenceStatus getConferenceStatus() {
         long numConferences = conferenceRepository.count();
-        long missingLogo = conferenceRepository.countByLogoUrlIsNull();
-        return new ConferenceStatus(numConferences, missingLogo > 0 ? "Missing logo for " + missingLogo + " conferences." : "OK");
+        if (numConferences == 0) {
+            return new ConferenceStatus(0, "No conferences.");
+        } else {
+            long missingLogo = conferenceRepository.countByLogoUrlIsNull();
+            return new ConferenceStatus(numConferences, missingLogo > 0 ? "Missing logo for " + missingLogo + " conferences." : "OK");
+        }
     }
 
-    private TeamStatus getTeamStatus() {
+    public TeamStatus getTeamStatus() {
         long numTeams = teamRepository.count();
-        long missingLogo = teamRepository.countByLogoUrlIsNull();
-        long missingColor = teamRepository.countByPrimaryColorIsNull();
-        String badData = (missingColor > 0 ? "Missing color for " + missingColor + " teams.  " : "") +
-                (missingLogo > 0 ? "Missing logo for " + missingLogo + " teams." : "");
-        return new TeamStatus(numTeams, StringUtils.isNotBlank(badData) ? badData : "OK");
+        if (numTeams == 0) {
+            return new TeamStatus(0, "No teams.");
+        } else {
+            long missingLogo = teamRepository.countByLogoUrlIsNull();
+            long missingColor = teamRepository.countByPrimaryColorIsNull();
+            String badData = (missingColor > 0 ? "Missing color for " + missingColor + " teams.  " : "") +
+                    (missingLogo > 0 ? "Missing logo for " + missingLogo + " teams." : "");
+            return new TeamStatus(numTeams, StringUtils.isNotBlank(badData) ? badData : "OK");
+        }
     }
 
     public List<Game> fetchGames(int seasonYear, LocalDate localDate, User user) {
@@ -395,7 +403,8 @@ public class ScheduleService {
     }
 
     public record SeasonStatus(int year, long numberOfTeams, long numberOfConferences, long numberOfGames,
-                               LocalDate firstGameDate, LocalDate lastGameDate, LocalDate lastCompleteGameDate, Timestamp lastUpdated) {
+                               LocalDate firstGameDate, LocalDate lastGameDate, LocalDate lastCompleteGameDate,
+                               Timestamp lastUpdated) {
     }
 
     @Transactional
