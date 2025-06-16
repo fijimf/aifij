@@ -195,6 +195,7 @@ public class ScheduleService {
                     g.setHomeMoneyLine(event.odds().home().moneyLine());
                 }
             }
+            g.setUpdatedAt(Timestamp.valueOf(LocalDateTime.now()));
             if (g.getHomeTeam() != null && g.getAwayTeam() != null) {
                 return Stream.of(g);
             } else {
