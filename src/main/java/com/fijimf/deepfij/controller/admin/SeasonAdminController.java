@@ -25,8 +25,8 @@ public class SeasonAdminController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<ScheduleService.ScheduleStatus> status(HttpServletRequest request) {
-        return ResponseEntity.ok(scheduleService.getStatus());
+    public ResponseEntity<List<ScheduleService.SeasonStatus>> status(HttpServletRequest request) {
+        return ResponseEntity.ok(scheduleService.getStatus().seasons());
     }
 
 
