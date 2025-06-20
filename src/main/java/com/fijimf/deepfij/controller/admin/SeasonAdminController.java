@@ -4,6 +4,7 @@ import com.fijimf.deepfij.model.User;
 import com.fijimf.deepfij.model.schedule.Game;
 import com.fijimf.deepfij.service.ScheduleService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +31,7 @@ public class SeasonAdminController {
     }
 
 
-    @GetMapping("/season/new")
+    @PostMapping("/new")
     public ResponseEntity<ScheduleService.ScheduleStatus> loadSeason(HttpServletRequest httpServletRequest, @RequestParam int seasonYear) {
         User user = controllerUtil.getUser(httpServletRequest);
         scheduleService.createSchedule(seasonYear, user);
@@ -38,20 +39,18 @@ public class SeasonAdminController {
     }
 
     @PostMapping("/drop/{seasonYear}")
-    public ResponseEntity<Integer> dropSeason(HttpServletRequest httpServletRequest, @RequestParam int seasonYear) {
+    public ResponseEntity<ScheduleService.ScheduleStatus> dropSeason(@PathVariable int seasonYear,  HttpServletRequest httpServletRequest) {
         User user = controllerUtil.getUser(httpServletRequest);
         int count = scheduleService.dropSeason(seasonYear, user);
-        return ResponseEntity.ok(count);
+        return ResponseEntity.ok(scheduleService.getStatus());
     }
 
     @GetMapping("/refresh/{seasonYear}")
-    public ResponseEntity<List<Game>> fetchGames(@PathVariable int seasonYear, @RequestParam String date, HttpServletRequest httpServletRequest) {
+    public ResponseEntity<ScheduleService.ScheduleStatus> fetchGames(@PathVariable int seasonYear, HttpServletRequest httpServletRequest) {
         // Parse the date string into LocalDate
-        LocalDate localDate = LocalDate.parse(date);
         User user = controllerUtil.getUser(httpServletRequest);
-        List<Game> games = scheduleService.fetchGames(seasonYear, localDate, user);
-        return ResponseEntity.ok(games);
+        scheduleService.refresh(seasonYear, user);
+        return ResponseEntity.ok(scheduleService.getStatus());
     }
-
 
 }

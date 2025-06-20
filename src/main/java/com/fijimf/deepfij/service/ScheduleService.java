@@ -126,7 +126,7 @@ public class ScheduleService {
         return (int) count;
     }
 
-    public List<Game> fetchGames(LocalDate index, Season season, User user) {
+    public List<Game> refresh(LocalDate index, Season season, User user) {
         LocalDateTime start = LocalDateTime.now();
         logger.info("Fetching games for " + index);
         ScoreboardResponse scoreboard = scrapingService.fetchScoreboard(Integer.parseInt(index.format(DateTimeFormatter.ofPattern("yyyyMMdd"))));
@@ -248,15 +248,18 @@ public class ScheduleService {
 
         logger.info("For " + yyyy + " there are " + conferenceMappingRepository.count() + " teams");
         LocalDateTime start = LocalDateTime.now();
-        Stream.iterate(s.getStartDate(), date -> !date.isAfter(s.getEndDate()), date -> date.plusDays(1)).forEach(
-                d -> {
-                    List<Game> games = fetchGames(d, s, user);
+        getGamesForRange(user, s, s.getStartDate(), s.getEndDate());
+        LocalDateTime end = LocalDateTime.now();
+        auditRepository.save(new Audit(0L, "createSchedule", "%d games fetched".formatted(gameRepository.count()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
+    }
 
+    private void getGamesForRange(User user, Season s, LocalDate startDate, LocalDate endDate) {
+        Stream.iterate(startDate, date -> !date.isAfter(endDate), date -> date.plusDays(1)).forEach(
+                d -> {
+                    List<Game> games = refresh(d, s, user);
                     updateGames(d, s, games);
                 }
         );
-        LocalDateTime end = LocalDateTime.now();
-        auditRepository.save(new Audit(0L, "createSchedule", "%d games fetched".formatted(gameRepository.count()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
     }
 
     private void createConferenceMappings(int yyyy, Season s, User user) {
@@ -359,11 +362,15 @@ public class ScheduleService {
             long seasonGames = games.size();
             LocalDate first = games.getFirst().getDate();
             LocalDate last = games.getLast().getDate();
-            LocalDate lastComplete = games.stream().filter(Game::isComplete).map(Game::getDate).toList().getLast();
+            LocalDate lastComplete = getLastComplete(games);
             Timestamp lastUpdated = games.stream().map(Game::getUpdatedAt).max(Comparator.naturalOrder()).orElse(null);
             return new SeasonStatus(year, seasonTeams, seasonConferences, seasonGames, first, last, lastComplete, lastUpdated);
         }).toList();
         return new ScheduleStatus(getTeamStatus(), getConferenceStatus(), seasons);
+    }
+
+    private static LocalDate getLastComplete(List<Game> games) {
+        return games.stream().filter(Game::isComplete).map(Game::getDate).toList().getLast();
     }
 
     public ConferenceStatus getConferenceStatus() {
@@ -389,8 +396,12 @@ public class ScheduleService {
         }
     }
 
-    public List<Game> fetchGames(int seasonYear, LocalDate localDate, User user) {
-        return fetchGames(localDate, seasonRepository.findByYear(seasonYear).getFirst(), user);
+    public void refresh(int seasonYear, User user) {
+        Season season = seasonRepository.findByYear(seasonYear).getFirst();
+        if (season != null) {
+            LocalDate startDate = getLastComplete(season.getGames()).minusDays(7);
+            getGamesForRange(user, season, startDate, season.getEndDate());
+        }
     }
 
     public record ScheduleStatus(TeamStatus teamStatus, ConferenceStatus conferenceStatus, List<SeasonStatus> seasons) {
