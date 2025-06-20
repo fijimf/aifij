@@ -32,7 +32,7 @@ public class ConferenceAdminController {
         return ResponseEntity.ok(scheduleService.getConferenceStatus());
     }
 
-    @GetMapping("/load")
+    @PostMapping("/load")
     public ResponseEntity<ScheduleService.ConferenceStatus> loadConferences(HttpServletRequest httpServletRequest) {
         User user = controllerUtil.getUser(httpServletRequest);
         List<Conference> conferences = scheduleService.loadConferences(user);

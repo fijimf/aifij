@@ -28,7 +28,7 @@ public class TeamAdminController {
         return ResponseEntity.ok(scheduleService.getTeamStatus());
     }
 
-    @GetMapping("/load")
+    @PostMapping("/load")
     public ResponseEntity<ScheduleService.TeamStatus> loadTeams(HttpServletRequest httpServletRequest) {
         User user = controllerUtil.getUser(httpServletRequest);
         scheduleService.loadTeams(user);
@@ -38,7 +38,7 @@ public class TeamAdminController {
     @PostMapping("/drop")
     public ResponseEntity<ScheduleService.TeamStatus> dropTeams(HttpServletRequest httpServletRequest) {
         User user = controllerUtil.getUser(httpServletRequest);
-        int count = scheduleService.dropTeams(user);
+        scheduleService.dropTeams(user);
         return ResponseEntity.ok(scheduleService.getTeamStatus() );
     }
 
