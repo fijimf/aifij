@@ -4,6 +4,8 @@ import com.fijimf.deepfij.auth.JwtRequestFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -28,23 +30,37 @@ public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
 
-    public SecurityConfig(@Autowired JwtRequestFilter jwtRequestFilter, @Autowired UserDetailsService userDetailsService) {
+    private final Environment environment;
+
+    public SecurityConfig(@Autowired JwtRequestFilter jwtRequestFilter, 
+                         @Autowired UserDetailsService userDetailsService,
+                         @Autowired Environment environment) {
         this.jwtRequestFilter = jwtRequestFilter;
         this.userDetailsService = userDetailsService;
+        this.environment = environment;
     }
 
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests(auth -> auth
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+
+        // Check if the "local" profile is active
+        if (environment.acceptsProfiles(Profiles.of("local"))) {
+            // If running with "local" profile, permit all requests without authentication
+            http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        } else {
+            // Normal security configuration for other profiles
+            http.authorizeHttpRequests(auth -> auth
                         .requestMatchers("/authenticate").permitAll() // Allow public access to authentication endpoint
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/admin/**").authenticated()
                         .anyRequest().permitAll())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+        }
 
         return http.build();
     }
