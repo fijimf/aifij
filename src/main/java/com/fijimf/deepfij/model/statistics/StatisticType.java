@@ -32,6 +32,9 @@ public class StatisticType {
     @Column(name = "decimal_places")
     private int decimalPlaces = 2;
 
+    @Column(name = "model_key")
+    private String modelKey;
+
     @OneToMany(mappedBy = "statisticType", fetch = FetchType.LAZY)
     private Set<TeamStatistic> teamStatistics;
 
@@ -94,5 +97,12 @@ public class StatisticType {
 
     public void setDecimalPlaces(int decimalPlaces) {
         this.decimalPlaces = decimalPlaces;
+    }
+
+    public String getModelKey() {
+        return modelKey;
+    }
+    public void setModelKey(String modelKey) {
+        this.modelKey = modelKey;
     }
 } 

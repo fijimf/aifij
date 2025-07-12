@@ -1,6 +1,7 @@
 package com.fijimf.deepfij.service;
 
 import com.fijimf.deepfij.model.schedule.Season;
+import com.fijimf.deepfij.model.statistics.StatisticType;
 import com.fijimf.deepfij.model.statistics.TeamStatistic;
 
 import java.time.LocalDate;
@@ -12,6 +13,7 @@ import java.util.stream.Collectors;
 public interface StatisticalModel {
 
     String key();
+    List<StatisticType>  refreshDBTypes();
     List<TeamStatistic> generate(Season season);
 
     default List<TeamStatistic> generate(Season season, List<LocalDate> dates) {

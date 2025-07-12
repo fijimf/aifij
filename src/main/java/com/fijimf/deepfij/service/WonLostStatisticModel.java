@@ -1,23 +1,18 @@
 package com.fijimf.deepfij.service;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import com.fijimf.deepfij.model.schedule.Game;
 import com.fijimf.deepfij.model.schedule.Season;
 import com.fijimf.deepfij.model.schedule.Team;
 import com.fijimf.deepfij.model.statistics.StatisticType;
 import com.fijimf.deepfij.model.statistics.TeamStatistic;
 import com.fijimf.deepfij.repo.GameRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class WonLostStatisticModel implements StatisticalModel {
@@ -27,17 +22,28 @@ public class WonLostStatisticModel implements StatisticalModel {
 
     @Autowired
     private StatisticTypeService statisticTypeService;
+
     @Override
     public String key() {
         return "WONLOST";
     }
+
+    @Override
+    public List<StatisticType> refreshDBTypes() {
+        return List.of(statisticTypeService.findOrCreateStatisticType("WINS", "WINS", "Wins", true, 0, key()),
+        statisticTypeService.findOrCreateStatisticType("LOSSES", "LOSSES", "Losses", false, 0, key()),
+        statisticTypeService.findOrCreateStatisticType("WIN_STREAK", "WIN_STREAK", "Winning Streak", true, 0, key()),
+        statisticTypeService.findOrCreateStatisticType("LOSS_STREAK", "LOSS_STREAK", "Losing Streak", false, 0, key()),
+        statisticTypeService.findOrCreateStatisticType("WIN_PCT", "WIN_PCT", "Winning Pct", true, 4, key()));
+    }
+
     @Override
     public List<TeamStatistic> generate(Season season) {
-        StatisticType winsType = statisticTypeService.findOrCreateStatisticType("WINS", "WINS", "Wins", true,0);
-        StatisticType lossesType = statisticTypeService.findOrCreateStatisticType("LOSSES", "LOSSES", "Losses", false,0);
-        StatisticType winStreakType = statisticTypeService.findOrCreateStatisticType("WIN_STREAK", "WIN_STREAK", "Winning Streak", true,0);
-        StatisticType lossStreakType = statisticTypeService.findOrCreateStatisticType("LOSS_STREAK", "LOSS_STREAK", "Losing Streak", false,0);
-        StatisticType winningPctType = statisticTypeService.findOrCreateStatisticType("WIN_PCT", "WIN_PCT", "Winning Pct", true, 4);
+        StatisticType winsType = statisticTypeService.findStatisticType("WINS");
+        StatisticType lossesType = statisticTypeService.findStatisticType("LOSSES");
+        StatisticType winStreakType = statisticTypeService.findStatisticType("WIN_STREAK");
+        StatisticType lossStreakType = statisticTypeService.findStatisticType("LOSS_STREAK");
+        StatisticType winningPctType = statisticTypeService.findStatisticType("WIN_PCT");
 
         // Get all games for the season ordered by date
         List<Game> games = gameRepository.findBySeasonOrderByDateAsc(season);
@@ -76,9 +82,9 @@ public class WonLostStatisticModel implements StatisticalModel {
                     winStreak.put(loser, 0);
                     lossStreak.put(loser, lossStreak.getOrDefault(loser, 0) + 1);
                     lossStreak.put(winner, 0);
-                   
-                    winningPct.put(winner, (double)wins.get(winner)/(wins.get(winner)+losses.get(winner)));
-                    winningPct.put(loser, (double)wins.get(loser)/(wins.get(loser)+losses.get(loser)));
+
+                    winningPct.put(winner, (double) wins.get(winner) / (wins.get(winner) + losses.get(winner)));
+                    winningPct.put(loser, (double) wins.get(loser) / (wins.get(loser) + losses.get(loser)));
                 }
             }
 

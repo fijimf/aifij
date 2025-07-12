@@ -1,0 +1,2 @@
+ALTER TABLE statistic_type
+    ADD COLUMN model_key VARCHAR(32) NOT NULL DEFAULT '#MISSING';

@@ -43,7 +43,7 @@ public class StatisticTypeRepositoryTest {
     @Test
     public void testInsertStatisticType() {
         // Create and save a statistic type
-        StatisticType statisticType = createDummyStatisticType("Points Per Game", "PPG");
+        StatisticType statisticType = createDummyStatisticType("Points Per Game", "PPG","points");
         statisticType = statisticTypeRepository.save(statisticType);
 
         // Verify it was saved correctly
@@ -55,7 +55,7 @@ public class StatisticTypeRepositoryTest {
     @Test
     public void testFindByCode() {
         // Create and save a statistic type
-        StatisticType statisticType = createDummyStatisticType("Points Per Game", "PPG");
+        StatisticType statisticType = createDummyStatisticType("Points Per Game", "PPG","points");
         statisticTypeRepository.save(statisticType);
 
         // Test findByCode
@@ -67,7 +67,7 @@ public class StatisticTypeRepositoryTest {
     @Test
     public void testFindByName() {
         // Create and save a statistic type
-        StatisticType statisticType = createDummyStatisticType("Points Per Game", "PPG");
+        StatisticType statisticType = createDummyStatisticType("Points Per Game", "PPG","points");
         statisticTypeRepository.save(statisticType);
 
         // Test findByName
@@ -93,11 +93,11 @@ public class StatisticTypeRepositoryTest {
     @Test
     public void testUniqueCodeConstraint() {
         // Create and save a statistic type
-        StatisticType statisticType1 = createDummyStatisticType("Points Per Game", "PPG");
+        StatisticType statisticType1 = createDummyStatisticType("Points Per Game", "PPG","points");
         statisticTypeRepository.save(statisticType1);
 
         // Try to create another with the same code
-        StatisticType statisticType2 = createDummyStatisticType("Different Name", "PPG");
+        StatisticType statisticType2 = createDummyStatisticType("Different Name", "PPG","points");
         assertThatThrownBy(() -> {
             statisticTypeRepository.save(statisticType2);
             statisticTypeRepository.flush();
@@ -107,11 +107,11 @@ public class StatisticTypeRepositoryTest {
     @Test
     public void testUniqueNameConstraint() {
         // Create and save a statistic type
-        StatisticType statisticType1 = createDummyStatisticType("Points Per Game", "PPG");
+        StatisticType statisticType1 = createDummyStatisticType("Points Per Game", "PPG","points");
         statisticTypeRepository.save(statisticType1);
 
         // Try to create another with the same name
-        StatisticType statisticType3 = createDummyStatisticType("Points Per Game", "DIF");
+        StatisticType statisticType3 = createDummyStatisticType("Points Per Game", "DIF","points");
         assertThatThrownBy(() -> {
             statisticTypeRepository.save(statisticType3);
             statisticTypeRepository.flush();
@@ -121,28 +121,28 @@ public class StatisticTypeRepositoryTest {
     @Test
     public void testValidationConstraints() {
         // Test with null name
-        StatisticType statisticType1 = createDummyStatisticType(null, "PPG");
+        StatisticType statisticType1 = createDummyStatisticType(null, "PPG","points");
         assertThatThrownBy(() -> {
             statisticTypeRepository.save(statisticType1);
             statisticTypeRepository.flush();
         }).isInstanceOf(ConstraintViolationException.class);
 
         // Test with empty name
-        StatisticType statisticType2 = createDummyStatisticType("", "PPG");
+        StatisticType statisticType2 = createDummyStatisticType("", "PPG","points");
         assertThatThrownBy(() -> {
             statisticTypeRepository.save(statisticType2);
             statisticTypeRepository.flush();
         }).isInstanceOf(ConstraintViolationException.class);
 
         // Test with null code
-        StatisticType statisticType3 = createDummyStatisticType("Points Per Game", null);
+        StatisticType statisticType3 = createDummyStatisticType("Points Per Game", null,"points");
         assertThatThrownBy(() -> {
             statisticTypeRepository.save(statisticType3);
             statisticTypeRepository.flush();
         }).isInstanceOf(ConstraintViolationException.class);
 
         // Test with empty code
-        StatisticType statisticType4 = createDummyStatisticType("Points Per Game", "");
+        StatisticType statisticType4 = createDummyStatisticType("Points Per Game", "","points");
         assertThatThrownBy(() -> {
             statisticTypeRepository.save(statisticType4);
             statisticTypeRepository.flush();
@@ -152,7 +152,7 @@ public class StatisticTypeRepositoryTest {
     @Test
     public void testUpdateStatisticType() {
         // Create and save a statistic type
-        StatisticType statisticType = createDummyStatisticType("Points Per Game", "PPG");
+        StatisticType statisticType = createDummyStatisticType("Points Per Game", "PPG","points");
         statisticType = statisticTypeRepository.save(statisticType);
         Long id = statisticType.getId();
 
@@ -172,7 +172,7 @@ public class StatisticTypeRepositoryTest {
     @Test
     public void testDeleteStatisticType() {
         // Create and save a statistic type
-        StatisticType statisticType = createDummyStatisticType("Points Per Game", "PPG");
+        StatisticType statisticType = createDummyStatisticType("Points Per Game", "PPG","points");
         statisticType = statisticTypeRepository.save(statisticType);
         Long id = statisticType.getId();
 
@@ -183,13 +183,14 @@ public class StatisticTypeRepositoryTest {
         assertThat(statisticTypeRepository.findById(id)).isEmpty();
     }
 
-    private StatisticType createDummyStatisticType(String name, String code) {
+    private StatisticType createDummyStatisticType(String name, String code, String modelKey) {
         StatisticType statisticType = new StatisticType();
         statisticType.setName(name);
         statisticType.setCode(code);
         statisticType.setDescription("Test statistic type");
         statisticType.setIsHigherBetter(true);
         statisticType.setDecimalPlaces(2);
+        statisticType.setModelKey(modelKey);
         return statisticType;
     }
 }

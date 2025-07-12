@@ -197,6 +197,7 @@ public class TeamStatisticRepositoryTest {
         statisticType.setDescription("Average points scored per game");
         statisticType.setIsHigherBetter(true);
         statisticType.setDecimalPlaces(2);
+        statisticType.setModelKey("points");
         return statisticType;
     }
 

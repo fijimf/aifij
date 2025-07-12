@@ -37,8 +37,13 @@ public class LogisticRegressionStatisticModel implements StatisticalModel {
     }
 
     @Override
+    public List<StatisticType> refreshDBTypes() {
+         return List.of(statisticTypeService.findOrCreateStatisticType("LOGISTIC_REGRESSION", "LOGISTIC_REGRESSION", "Logistic Regression", true, 4, key()));
+    }
+
+    @Override
     public List<TeamStatistic> generate(Season season) {
-        StatisticType type = statisticTypeService.findOrCreateStatisticType("LOGISTIC_REGRESSION", "LOGISTIC_REGRESSION", "Logistic Regression", true, 4);
+        StatisticType type = statisticTypeService.findStatisticType("LOGISTIC_REGRESSION");
         String url = String.format(apiUrl +"/api/rankings/logistic?year=%d", season.getYear());
         JsonNode response = restTemplate.getForObject(url, JsonNode.class);
         List<TeamStatistic> statistics = new ArrayList<>();

@@ -22,20 +22,24 @@ public class StatisticsAdminController {
         this.statisticalService = statisticalService;
     }
 
+    @GetMapping("/")
+    public ResponseEntity<StatisticalService.StatisticsStatus> status(){
+      return ResponseEntity.ok( statisticalService.getStatisticStatus());
+    }
 
-    @GetMapping("/{model}/run")
-    public ResponseEntity<Map<LocalDate, Integer>> runModel(@RequestParam int seasonYear, @PathVariable String model) {
-        List<TeamStatistic> teamStatistics = statisticalService.generateStatistics(Integer.toString(seasonYear), model);
+    @PostMapping("/{model}/run")
+    public ResponseEntity<StatisticalService.StatisticsStatus> runModel(@RequestParam int season, @PathVariable String model) {
+        List<TeamStatistic> teamStatistics = statisticalService.generateStatistics(Integer.toString(season), model);
         Map<LocalDate, Integer> countByDate = teamStatistics
                 .stream()
                 .collect(Collectors.groupingBy(TeamStatistic::getStatisticDate))
                 .entrySet()
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().size()));
-        return ResponseEntity.ok(countByDate);
+        return ResponseEntity.ok( statisticalService.getStatisticStatus());
     }
 
-    @GetMapping("/")
+    @GetMapping("/models")
     public ResponseEntity<List<String>> listStatModels() {
         return ResponseEntity.ok(statisticalService.modelKeys());
     }
