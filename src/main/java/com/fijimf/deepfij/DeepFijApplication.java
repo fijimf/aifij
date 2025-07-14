@@ -38,8 +38,16 @@ public class DeepFijApplication {
         if (StringUtils.isNotBlank(p)) {
             return p;
         } else {
-            RandomStringGenerator rsg = new RandomStringGenerator.Builder().withinRange('a', 'z').build();
-            return rsg.generate(6);
+            // Generate a password that meets complexity requirements
+            RandomStringGenerator lowercase = new RandomStringGenerator.Builder().withinRange('a', 'z').build();
+            RandomStringGenerator uppercase = new RandomStringGenerator.Builder().withinRange('A', 'Z').build();
+            RandomStringGenerator digits = new RandomStringGenerator.Builder().withinRange('0', '9').build();
+            
+            // Build password with required character types (8 characters total)
+            return uppercase.generate(2) +    // 2 uppercase letters
+                   lowercase.generate(3) +    // 3 lowercase letters  
+                   digits.generate(2) +       // 2 digits
+                   "!";                       // 1 special character
         }
     }
 }
