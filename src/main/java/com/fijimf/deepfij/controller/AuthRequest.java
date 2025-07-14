@@ -1,28 +1,23 @@
 package com.fijimf.deepfij.controller;
 
-public class AuthRequest {
-    private String username;
-    private String password;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
-    public AuthRequest(String username, String password) {
-        this.username = username;
-        this.password = password;
-    }
-    // Getters and setters
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
+public record AuthRequest(
+    @NotBlank(message = "Username is required")
+    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    String username,
+    
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, max = 128, message = "Password must be between 8 and 128 characters")
+    String password
+) {
+    public AuthRequest {
+        if (username != null && username.trim().isEmpty()) {
+            throw new IllegalArgumentException("Username cannot be blank");
+        }
+        if (password != null && password.trim().isEmpty()) {
+            throw new IllegalArgumentException("Password cannot be blank");
+        }
     }
 }

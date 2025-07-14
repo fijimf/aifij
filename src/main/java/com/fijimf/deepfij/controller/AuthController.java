@@ -1,10 +1,8 @@
 package com.fijimf.deepfij.controller;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,89 +14,95 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fijimf.deepfij.auth.util.JwtUtil;
+import com.fijimf.deepfij.response.ApiResponse;
 import com.fijimf.deepfij.service.UserService;
+import com.fijimf.deepfij.validation.PasswordValidator;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api")
+@Validated
 public class AuthController {
 
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
     private final AuthenticationManager authenticationManager;
-
     private final JwtUtil jwtUtil;
-
     private final UserDetailsService userDetailsService;
-
     private final UserService userService;
+    private final PasswordValidator passwordValidator;
 
     @Autowired
-    public AuthController( AuthenticationManager authenticationManager, JwtUtil jwtUtil, UserDetailsService userDetailsService, UserService userService) {
+    public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil, 
+                         UserDetailsService userDetailsService, UserService userService,
+                         PasswordValidator passwordValidator) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
         this.userService = userService;
+        this.passwordValidator = passwordValidator;
     }
 
-
     @PostMapping("/authenticate")
-    public ResponseEntity<Map<String, String>> createAuthenticationToken(@RequestBody AuthRequest authRequest) {
+    public ResponseEntity<ApiResponse<Map<String, String>>> createAuthenticationToken(@Valid @RequestBody AuthRequest authRequest) {
         try {
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword())
+                    new UsernamePasswordAuthenticationToken(authRequest.username(), authRequest.password())
             );
         } catch (AuthenticationException authenticationException) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("Invalid username or password"));
         }
         try {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUsername());
+            UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.username());
             String token = jwtUtil.generateToken(userDetails.getUsername());
-            Map<String, String> response = new HashMap<>();
-            log.info("Authentication successful for user {}\n{}", authRequest.getUsername(), StringUtils.abbreviate(token, 15));
-            response.put("token", token);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
+            log.info("Authentication successful for user {}", authRequest.username());
+            return ResponseEntity.ok(ApiResponse.success("Authentication successful", Map.of("token", token)));
         } catch (UsernameNotFoundException usernameNotFoundException) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("Invalid username or password"));
         }
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Map<String, String>> register(@RequestBody AuthRequest authRequest) {
+    public ResponseEntity<ApiResponse<Map<String, String>>> register(@Valid @RequestBody AuthRequest authRequest) {
         try {
-            // Validate request
-            if (authRequest.getUsername() == null || authRequest.getPassword() == null ||
-                authRequest.getUsername().trim().isEmpty() || authRequest.getPassword().trim().isEmpty()) {
+            // Validate password complexity
+            PasswordValidator.ValidationResult passwordValidation = passwordValidator.validate(authRequest.password());
+            if (!passwordValidation.isValid()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "Username and password are required"));
+                    .body(ApiResponse.error("Password validation failed: " + String.join(", ", passwordValidation.errors())));
             }
     
             // Check if username already exists
             try {
-                userDetailsService.loadUserByUsername(authRequest.getUsername());
+                userDetailsService.loadUserByUsername(authRequest.username());
                 return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("error", "Username already exists"));
+                    .body(ApiResponse.error("Username already exists"));
             } catch (UsernameNotFoundException e) {
                 // Username is available, continue with registration
             }
     
             // Create new user
-            UserDetails newUser = userService.createUser(authRequest.getUsername(), authRequest.getPassword(), List.of("USER"));
+            UserDetails newUser = userService.createUser(authRequest.username(), authRequest.password(), List.of("USER"));
     
             // Generate token for automatic login
             String token = jwtUtil.generateToken(newUser.getUsername());
             
             return ResponseEntity.status(HttpStatus.CREATED)
-                .body(Map.of("token", token, "message", "User registered successfully"));
+                .body(ApiResponse.success("User registered successfully", Map.of("token", token)));
                 
         } catch (Exception e) {
+            log.error("Registration failed for user {}", authRequest.username(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "Registration failed: " + e.getMessage()));
+                .body(ApiResponse.error("Registration failed. Please try again."));
         }
     }
 }
-
