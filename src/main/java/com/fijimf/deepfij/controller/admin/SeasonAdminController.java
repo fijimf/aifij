@@ -3,6 +3,7 @@ package com.fijimf.deepfij.controller.admin;
 import com.fijimf.deepfij.model.User;
 import com.fijimf.deepfij.model.schedule.Game;
 import com.fijimf.deepfij.service.ScheduleService;
+import com.fijimf.deepfij.response.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,31 +27,31 @@ public class SeasonAdminController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<List<ScheduleService.SeasonStatus>> status(HttpServletRequest request) {
-        return ResponseEntity.ok(scheduleService.getStatus().seasons());
+    public ResponseEntity<ApiResponse<List<ScheduleService.SeasonStatus>>> status(HttpServletRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(scheduleService.getStatus().seasons()));
     }
 
 
     @PostMapping("/new")
-    public ResponseEntity<ScheduleService.ScheduleStatus> loadSeason(HttpServletRequest httpServletRequest, @RequestParam int seasonYear) {
+    public ResponseEntity<ApiResponse<ScheduleService.ScheduleStatus>> loadSeason(HttpServletRequest httpServletRequest, @RequestParam int seasonYear) {
         User user = controllerUtil.getUser(httpServletRequest);
         scheduleService.createSchedule(seasonYear, user);
-        return ResponseEntity.ok(scheduleService.getStatus());
+        return ResponseEntity.ok(ApiResponse.success(scheduleService.getStatus()));
     }
 
     @PostMapping("/drop/{seasonYear}")
-    public ResponseEntity<ScheduleService.ScheduleStatus> dropSeason(@PathVariable int seasonYear,  HttpServletRequest httpServletRequest) {
+    public ResponseEntity<ApiResponse<ScheduleService.ScheduleStatus>> dropSeason(@PathVariable int seasonYear,  HttpServletRequest httpServletRequest) {
         User user = controllerUtil.getUser(httpServletRequest);
         int count = scheduleService.dropSeason(seasonYear, user);
-        return ResponseEntity.ok(scheduleService.getStatus());
+        return ResponseEntity.ok(ApiResponse.success(scheduleService.getStatus()));
     }
 
     @GetMapping("/refresh/{seasonYear}")
-    public ResponseEntity<ScheduleService.ScheduleStatus> fetchGames(@PathVariable int seasonYear, HttpServletRequest httpServletRequest) {
+    public ResponseEntity<ApiResponse<ScheduleService.ScheduleStatus>> fetchGames(@PathVariable int seasonYear, HttpServletRequest httpServletRequest) {
         // Parse the date string into LocalDate
         User user = controllerUtil.getUser(httpServletRequest);
         scheduleService.refresh(seasonYear, user);
-        return ResponseEntity.ok(scheduleService.getStatus());
+        return ResponseEntity.ok(ApiResponse.success(scheduleService.getStatus()));
     }
 
 }

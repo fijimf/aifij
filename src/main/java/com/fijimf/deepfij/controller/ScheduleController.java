@@ -20,6 +20,7 @@ import com.fijimf.deepfij.model.schedule.Season;
 import com.fijimf.deepfij.model.schedule.Team;
 import com.fijimf.deepfij.repo.SeasonRepository;
 import com.fijimf.deepfij.repo.TeamRepository;
+import com.fijimf.deepfij.response.ApiResponse;
 
 @RestController
 public class ScheduleController {
@@ -38,7 +39,7 @@ public class ScheduleController {
 
     @Cacheable(value = "teamPages", key = "#year + '-' + #teamId")
     @GetMapping("/team/{teamId}")
-    public ResponseEntity<TeamPage> getTeamData(@PathVariable Long teamId, @RequestParam(required = false) Integer year) {
+    public ResponseEntity<ApiResponse<TeamPage>> getTeamData(@PathVariable Long teamId, @RequestParam(required = false) Integer year) {
 
        logger.info(teamId.toString());
        Season season;
@@ -47,36 +48,36 @@ public class ScheduleController {
         } else {
             season = seasonRepository.findByYear(year).getFirst(); // Fetch season by year
         }
-        if (season == null) return ResponseEntity.notFound().build();
+        if (season == null) return ResponseEntity.status(404).body(ApiResponse.error("Season not found"));
         Team team = teamRepository.findById(teamId).orElse(null);
-        if (team == null) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(TeamPage.create(team, season));
+        if (team == null) return ResponseEntity.status(404).body(ApiResponse.error("Team not found"));
+        return ResponseEntity.ok(ApiResponse.success(TeamPage.create(team, season)));
 
     }
 
     @Cacheable(value = "teamPages")
     @GetMapping("/teams")
-    public ResponseEntity<TeamsPage> getTeamData() {
+    public ResponseEntity<ApiResponse<TeamsPage>> getTeamData() {
 
         logger.info("Fetching teams");
         List<Team> teams = teamRepository.findAll();
         Season season = seasonRepository.findFirstByOrderByYearDesc(); // Fetch most recent season
-        if (season == null) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(TeamsPage.create(teams, season));
+        if (season == null) return ResponseEntity.status(404).body(ApiResponse.error("Season not found"));
+        return ResponseEntity.ok(ApiResponse.success(TeamsPage.create(teams, season)));
 
     }
 
     @GetMapping("/tournament")
-    public ResponseEntity<TournamentBuilder.Tournament> getTournament( @RequestParam(required = false) Integer year) {
+    public ResponseEntity<ApiResponse<TournamentBuilder.Tournament>> getTournament( @RequestParam(required = false) Integer year) {
         Season season;
         if (year == null) {
             season = seasonRepository.findFirstByOrderByYearDesc(); // Fetch most recent season
         } else {
             season = seasonRepository.findByYear(year).getFirst(); // Fetch season by year
         }
-        if (season == null) return ResponseEntity.notFound().build();
+        if (season == null) return ResponseEntity.status(404).body(ApiResponse.error("Season not found"));
 
-       return ResponseEntity.ok(tournamentBuilder.build(season));
+       return ResponseEntity.ok(ApiResponse.success(tournamentBuilder.build(season)));
 
 
     }

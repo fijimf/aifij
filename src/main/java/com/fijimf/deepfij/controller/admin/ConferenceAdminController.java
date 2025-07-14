@@ -3,6 +3,7 @@ package com.fijimf.deepfij.controller.admin;
 import com.fijimf.deepfij.model.User;
 import com.fijimf.deepfij.model.schedule.Conference;
 import com.fijimf.deepfij.service.ScheduleService;
+import com.fijimf.deepfij.response.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -28,22 +29,22 @@ public class ConferenceAdminController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<ScheduleService.ConferenceStatus> status() {
-        return ResponseEntity.ok(scheduleService.getConferenceStatus());
+    public ResponseEntity<ApiResponse<ScheduleService.ConferenceStatus>> status() {
+        return ResponseEntity.ok(ApiResponse.success(scheduleService.getConferenceStatus()));
     }
 
     @PostMapping("/load")
-    public ResponseEntity<ScheduleService.ConferenceStatus> loadConferences(HttpServletRequest httpServletRequest) {
+    public ResponseEntity<ApiResponse<ScheduleService.ConferenceStatus>> loadConferences(HttpServletRequest httpServletRequest) {
         User user = controllerUtil.getUser(httpServletRequest);
         List<Conference> conferences = scheduleService.loadConferences(user);
-        return ResponseEntity.ok(scheduleService.getConferenceStatus());
+        return ResponseEntity.ok(ApiResponse.success(scheduleService.getConferenceStatus()));
     }
 
     @PostMapping("/drop")
-    public ResponseEntity<ScheduleService.ConferenceStatus> dropConferences(HttpServletRequest httpServletRequest) {
+    public ResponseEntity<ApiResponse<ScheduleService.ConferenceStatus>> dropConferences(HttpServletRequest httpServletRequest) {
         User user = controllerUtil.getUser(httpServletRequest);
         int count = scheduleService.dropConferences(user);
-        return ResponseEntity.ok(scheduleService.getConferenceStatus());
+        return ResponseEntity.ok(ApiResponse.success(scheduleService.getConferenceStatus()));
     }
 
 }

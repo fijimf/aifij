@@ -6,6 +6,7 @@ import com.fijimf.deepfij.model.schedule.Season;
 import com.fijimf.deepfij.model.schedule.Team;
 import com.fijimf.deepfij.repo.SeasonRepository;
 import com.fijimf.deepfij.service.impl.StatisticServiceImpl;
+import com.fijimf.deepfij.response.ApiResponse;
 import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,7 @@ public class StatsController {
 
 
     @GetMapping("/stats/{statName}/summary")
-    public ResponseEntity<StatSummaryPage> getStatSummary(@PathVariable String statName, @RequestParam(required = false) Integer year) {
+    public ResponseEntity<ApiResponse<StatSummaryPage>> getStatSummary(@PathVariable String statName, @RequestParam(required = false) Integer year) {
 
 
         Season season;
@@ -43,9 +44,9 @@ public class StatsController {
         } else {
             season = seasonRepository.findByYear(year).getFirst(); // Fetch season by year
         }
-        if (season == null) return ResponseEntity.notFound().build();
+        if (season == null) return ResponseEntity.status(404).body(ApiResponse.error("Season not found"));
 
-        return ResponseEntity.ok(statisticService.getStatSummaryPage(season.getYear(), statName));
+        return ResponseEntity.ok(ApiResponse.success(statisticService.getStatSummaryPage(season.getYear(), statName)));
 
     }
 

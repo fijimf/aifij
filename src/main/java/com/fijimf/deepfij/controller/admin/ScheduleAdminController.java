@@ -1,6 +1,7 @@
 package com.fijimf.deepfij.controller.admin;
 
 import com.fijimf.deepfij.service.ScheduleService;
+import com.fijimf.deepfij.response.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +21,7 @@ public class ScheduleAdminController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<ScheduleService.ScheduleStatus> status() {
-        return ResponseEntity.ok(scheduleService.getStatus());
+    public ResponseEntity<ApiResponse<ScheduleService.ScheduleStatus>> status() {
+        return ResponseEntity.ok(ApiResponse.success(scheduleService.getStatus()));
     }
 }

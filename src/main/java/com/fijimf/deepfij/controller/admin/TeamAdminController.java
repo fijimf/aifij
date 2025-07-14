@@ -4,6 +4,7 @@ import com.fijimf.deepfij.auth.util.JwtUtil;
 import com.fijimf.deepfij.model.User;
 import com.fijimf.deepfij.repo.UserRepository;
 import com.fijimf.deepfij.service.ScheduleService;
+import com.fijimf.deepfij.response.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -24,22 +25,22 @@ public class TeamAdminController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<ScheduleService.TeamStatus> status() {
-        return ResponseEntity.ok(scheduleService.getTeamStatus());
+    public ResponseEntity<ApiResponse<ScheduleService.TeamStatus>> status() {
+        return ResponseEntity.ok(ApiResponse.success(scheduleService.getTeamStatus()));
     }
 
     @PostMapping("/load")
-    public ResponseEntity<ScheduleService.TeamStatus> loadTeams(HttpServletRequest httpServletRequest) {
+    public ResponseEntity<ApiResponse<ScheduleService.TeamStatus>> loadTeams(HttpServletRequest httpServletRequest) {
         User user = controllerUtil.getUser(httpServletRequest);
         scheduleService.loadTeams(user);
-        return ResponseEntity.ok(scheduleService.getTeamStatus() );
+        return ResponseEntity.ok(ApiResponse.success(scheduleService.getTeamStatus()));
     }
 
     @PostMapping("/drop")
-    public ResponseEntity<ScheduleService.TeamStatus> dropTeams(HttpServletRequest httpServletRequest) {
+    public ResponseEntity<ApiResponse<ScheduleService.TeamStatus>> dropTeams(HttpServletRequest httpServletRequest) {
         User user = controllerUtil.getUser(httpServletRequest);
         scheduleService.dropTeams(user);
-        return ResponseEntity.ok(scheduleService.getTeamStatus() );
+        return ResponseEntity.ok(ApiResponse.success(scheduleService.getTeamStatus()));
     }
 
 
