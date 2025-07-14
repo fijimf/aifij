@@ -54,9 +54,10 @@ public class SecurityConfig {
         } else {
             // Normal security configuration for other profiles
             http.authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/authenticate").permitAll() // Allow public access to authentication endpoint
+                        .requestMatchers("/authenticate", "/register", "/forgot-password", "/reset-password").permitAll() // Public auth endpoints
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/admin/**").authenticated()
+                        .requestMatchers("/profile", "/change-password", "/logout", "/refresh-token").authenticated() // Require auth for user endpoints
                         .anyRequest().permitAll())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);

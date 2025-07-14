@@ -46,6 +46,10 @@ public class UserService {
         return getUserDetails(user);
     }
 
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+
     public static UserDetails getUserDetails(User u) {
         return org.springframework.security.core.userdetails.User
                 .withUsername(u.getUsername())

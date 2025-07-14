@@ -65,9 +65,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-            }
-            if (!jwtUtil.validateToken(jwtToken, userDetails.getUsername())) {
-                logger.info("Token validation failed");
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Successfully authenticated user: %s".formatted(username));
+                }
+            } else {
+                if (logger.isInfoEnabled()) {
+                    logger.info("Token validation failed for user: %s".formatted(username));
+                }
             }
         }
 

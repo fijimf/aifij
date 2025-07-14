@@ -1,5 +1,6 @@
 package com.fijimf.deepfij.auth.util;
 
+import com.fijimf.deepfij.service.TokenBlacklistService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -17,7 +18,8 @@ class JwtUtilTest {
 
     @BeforeEach
     void setUp() {
-        jwtUtil = new JwtUtil();
+        TokenBlacklistService blacklistService = new TokenBlacklistService();
+        jwtUtil = new JwtUtil(blacklistService);
         ReflectionTestUtils.setField(jwtUtil, "secretKey", TEST_SECRET);
         ReflectionTestUtils.setField(jwtUtil, "expirationTime", TEST_EXPIRATION);
     }
