@@ -63,6 +63,9 @@ public class InspirationalQuoteController {
         Optional<InspirationalQuote> quote;
         if (tag != null && !tag.isEmpty()) {
             quote = quoteService.getRandomQuoteByTag(tag);
+            if (!quote.isPresent()){
+                quote = quoteService.getRandomQuote();
+            }
         } else {
             quote = quoteService.getRandomQuote();
         }
