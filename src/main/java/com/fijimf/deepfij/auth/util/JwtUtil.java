@@ -32,9 +32,20 @@ public class JwtUtil {
     }
 
     private Key getSigningKey() {
-        // Decode base64 secret key for better security
-        byte[] keyBytes = Base64.getDecoder().decode(secretKey);
-        return Keys.hmacShaKeyFor(keyBytes);
+        try {
+            // Try to decode base64 secret key
+            byte[] keyBytes = Base64.getDecoder().decode(secretKey);
+            return Keys.hmacShaKeyFor(keyBytes);
+        } catch (IllegalArgumentException e) {
+            // If Base64 decoding fails, treat the secret as plain text
+            // This handles cases where JWT_SECRET env var is not properly base64 encoded
+            byte[] keyBytes = secretKey.getBytes();
+            if (keyBytes.length < 32) {
+                // HMAC-SHA256 requires at least 32 bytes (256 bits)
+                throw new IllegalArgumentException("JWT secret key must be at least 32 bytes when not base64 encoded");
+            }
+            return Keys.hmacShaKeyFor(keyBytes);
+        }
     }
 
     public String generateToken(String username) {
