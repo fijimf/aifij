@@ -56,6 +56,7 @@ public class SecurityConfig {
             http.authorizeHttpRequests(auth -> auth
                         .requestMatchers("/authenticate", "/register", "/forgot-password", "/reset-password").permitAll() // Public auth endpoints
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/info").permitAll() // Actuator endpoints
                         .requestMatchers("/admin/**").authenticated()
                         .requestMatchers("/profile", "/change-password", "/logout", "/refresh-token").authenticated() // Require auth for user endpoints
                         .anyRequest().permitAll())
