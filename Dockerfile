@@ -14,6 +14,11 @@ COPY --from=build /app/target/*.jar app.jar
 ENV JAVA_OPTS="-Xmx512m -Xms256m"
 ENV SPRING_PROFILES_ACTIVE="prod"
 
+# Database environment variables (can be overridden by docker-compose)
+ENV DB_NAME="postgres"
+ENV DB_USER="postgres" 
+ENV DB_PASSWORD="p@ssw0rd"
+
 # Expose the port the app runs on
 EXPOSE 8080
 
