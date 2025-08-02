@@ -269,12 +269,17 @@ public class ScheduleService {
             Conference c = findOrCreateConference(cs);
             cs.consolidatedStandings().forEach(se -> {
                 Team t = findOrCreateTeam(se);
-                ConferenceMapping mapping = new ConferenceMapping();
-                mapping.setSeason(s);
-                mapping.setConference(c);
-                mapping.setTeam(t);
-                logger.info("Mapping team " + t.getName() + " to conference " + c.getName() + " in season " + s.getName());
-                conferenceMappingRepository.save(mapping);
+                Optional<ConferenceMapping> existingMapping = conferenceMappingRepository.findBySeasonAndTeam(s, t);
+                if (existingMapping.isEmpty()) {
+                    ConferenceMapping mapping = new ConferenceMapping();
+                    mapping.setSeason(s);
+                    mapping.setConference(c);
+                    mapping.setTeam(t);
+                    logger.info("Mapping team " + t.getName() + " to conference " + c.getName() + " in season " + s.getName());
+                    conferenceMappingRepository.save(mapping);
+                } else {
+                    logger.info("Team " + t.getName() + " already mapped to conference " + existingMapping.get().getConference().getName() + " in season " + s.getName());
+                }
             });
         });
         LocalDateTime end = LocalDateTime.now();
