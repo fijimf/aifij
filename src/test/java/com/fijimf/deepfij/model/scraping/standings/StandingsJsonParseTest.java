@@ -2,6 +2,7 @@ package com.fijimf.deepfij.model.scraping.standings;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fijimf.deepfij.model.scraping.conference.ConferenceResponse;
+import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -40,6 +41,24 @@ public class StandingsJsonParseTest {
         assertThat(response).isNotNull();
         assertThat(response.children()).isNotNull();
         assertThat(response.children()).hasSize(31);
+        response.children().forEach(StandingsJsonParseTest::conferenceAssertions);
+
+
+    }
+    @Test
+    public void testParse2025AJson() throws IOException {
+        String json = new String(getClass().getClassLoader()
+                .getResourceAsStream("json/standings2025a.json")
+                .readAllBytes());
+
+        ObjectMapper mapper = new ObjectMapper();
+        StandingsResponse response = mapper.readValue(json, StandingsResponse.class);
+
+        assertThat(response).isNotNull();
+        assertThat(response).isNotNull();
+        assertThat(response.children()).isNotNull();
+        assertThat(response.children()).hasSize(32);
+        assertThat(response.children()).filteredOn(ConferenceStanding::isConference).hasSize(31);
         response.children().forEach(StandingsJsonParseTest::conferenceAssertions);
 
 

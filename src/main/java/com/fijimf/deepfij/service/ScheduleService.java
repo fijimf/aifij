@@ -265,7 +265,7 @@ public class ScheduleService {
     private void createConferenceMappings(int yyyy, Season s, User user) {
         LocalDateTime start = LocalDateTime.now();
         StandingsResponse standingsResponse = scrapingService.fetchStandings(yyyy);
-        standingsResponse.children().forEach(cs -> {
+        standingsResponse.children().stream().filter(ConferenceStanding::isConference).forEach(cs -> {
             Conference c = findOrCreateConference(cs);
             cs.consolidatedStandings().forEach(se -> {
                 Team t = findOrCreateTeam(se);
