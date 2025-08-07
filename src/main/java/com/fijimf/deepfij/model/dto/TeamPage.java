@@ -7,10 +7,10 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public record TeamPage(Integer season, TeamDTO team, Map<String, Record> records, ConferenceDTO conference,
+public record TeamPage(Integer season, List<Integer> seasons, TeamDTO team, Map<String, Record> records, ConferenceDTO conference,
                        List<GameDTO> games) {
 
-    public static TeamPage create(Team t, Season s) {
+    public static TeamPage create(Team t, Season s, List<Integer> seasons) {
         List<Game> allGames = s.getGames();
         List<Game> games = allGames.stream().filter(game -> game.getHomeTeam().equals(t) || game.getAwayTeam().equals(t)).toList();
         Conference c = s.getConferenceMappings().stream().filter(mapping -> mapping.getTeam().equals(t)).map(ConferenceMapping::getConference).findFirst().orElseThrow(RuntimeException::new);
@@ -54,7 +54,7 @@ public record TeamPage(Integer season, TeamDTO team, Map<String, Record> records
                     spreadDescription, covered, overUnder,overOrUnder, moneyLine,moneyLinePaid, oppMoneyLine,oppMoneyLinePaid);
         }).toList();
 
-        return new TeamPage(s.getYear(), team, records, conference, gs);
+        return new TeamPage(s.getYear(), seasons, team, records, conference, gs);
 
     }
 

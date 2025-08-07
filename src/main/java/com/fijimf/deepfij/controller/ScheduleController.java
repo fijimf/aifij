@@ -51,7 +51,7 @@ public class ScheduleController {
         if (season == null) return ResponseEntity.status(404).body(ApiResponse.error("Season not found"));
         Team team = teamRepository.findById(teamId).orElse(null);
         if (team == null) return ResponseEntity.status(404).body(ApiResponse.error("Team not found"));
-        return ResponseEntity.ok(ApiResponse.success(TeamPage.create(team, season)));
+        return ResponseEntity.ok(ApiResponse.success(TeamPage.create(team, season, seasonRepository.findAll().stream().map(Season::getYear).toList())));
 
     }
 
