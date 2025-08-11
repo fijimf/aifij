@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -35,18 +37,24 @@ public class StatsController {
 
 
     @GetMapping("/stats/{statName}/summary")
-    public ResponseEntity<ApiResponse<StatSummaryPage>> getStatSummary(@PathVariable String statName, @RequestParam(required = false) Integer year) {
+    public ResponseEntity<ApiResponse<StatSummaryPage>> getStatSummary(@PathVariable String statName, @RequestParam(required = false) Integer year, @RequestParam(required = false) String yyyymmdd) {
 
 
         Season season;
         if (year == null) {
             season = seasonRepository.findFirstByOrderByYearDesc(); // Fetch most recent season
+            if (yyyymmdd!= null) throw new IllegalArgumentException("Cannot specify yyyymmdd when year is not specified");
         } else {
             season = seasonRepository.findByYear(year).getFirst(); // Fetch season by year
         }
         if (season == null) return ResponseEntity.status(404).body(ApiResponse.error("Season not found"));
-
-        return ResponseEntity.ok(ApiResponse.success(statisticService.getStatSummaryPage(season.getYear(), statName)));
+        if (yyyymmdd != null) {
+            LocalDate d = LocalDate.parse(yyyymmdd, DateTimeFormatter.ofPattern("yyyyMMdd"));
+            if (season.getStartDate().isAfter(d) || season.getEndDate().isBefore(d)) throw new IllegalArgumentException("Specified date is not within the season");
+            return ResponseEntity.ok(ApiResponse.success(statisticService.getStatSummaryPage(statName, season, d)));
+        } else {
+            return ResponseEntity.ok(ApiResponse.success(statisticService.getStatSummaryPage(statName, season)));
+        }
 
     }
 

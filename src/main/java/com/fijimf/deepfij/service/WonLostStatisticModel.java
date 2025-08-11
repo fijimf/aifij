@@ -28,22 +28,44 @@ public class WonLostStatisticModel implements StatisticalModel {
         return "WONLOST";
     }
 
+    public static final String WINS_DESCRIPTION = """
+            Wins is simply the number of wins that a team has as of that date.
+            It is a naive statistic, but all else equal the team with more wins will be more likely to beat one with fewer.""";
+    public static final String LOSSES_DESCRIPTION = """
+            Losses is simply the number of losses that a team has as of that date.
+            It is a naive statistic, but all else equal the team with fewer losses will be more likely to beat one with more.""";
+    public static final String WIN_STREAK_DESCRIPTION = """
+            Winning streak is the number of games a team has won in a row.  We do not carry streaks across seasons.
+            "At the margins, winning streak conveys some information, but is unlikely to be effective for prediction.""";
+    public static final String LOSS_STREAK_DESCRIPTION = """
+            Losing streak is the number of games a team has won in a row.  We do not carry streaks across seasons.
+            At the margins, losing streak conveys some information, but is unlikely to be effective for prediction.""";
+    public static final String WIN_PCT_DESCRIPTION = """
+            Winning percent is the number of wins divided by the number of games that a team has played as of that date.
+            It is an improvement over wins and losses, but does not account for the quality of the games.  All else equal the team with a higher winning percent will be bore likely to beat one with fewer.""";
+    ;
+    public static final String WINS_KEY = "WINS";
+    public static final String LOSSES_KEY = "LOSSES";
+    public static final String WIN_STREAK_KEY = "WIN_STREAK";
+    public static final String LOSS_STREAK_KEY = "LOSS_STREAK";
+    public static final String WIN_PCT_KEY = "WIN_PCT";
+
     @Override
     public List<StatisticType> refreshDBTypes() {
-        return List.of(statisticTypeService.findOrCreateStatisticType("WINS", "WINS", "Wins", true, 0, key()),
-        statisticTypeService.findOrCreateStatisticType("LOSSES", "LOSSES", "Losses", false, 0, key()),
-        statisticTypeService.findOrCreateStatisticType("WIN_STREAK", "WIN_STREAK", "Winning Streak", true, 0, key()),
-        statisticTypeService.findOrCreateStatisticType("LOSS_STREAK", "LOSS_STREAK", "Losing Streak", false, 0, key()),
-        statisticTypeService.findOrCreateStatisticType("WIN_PCT", "WIN_PCT", "Winning Pct", true, 4, key()));
+        return List.of(statisticTypeService.findOrCreateStatisticType(WINS_KEY, "WINS", WINS_DESCRIPTION, true, 0, key()),
+                statisticTypeService.findOrCreateStatisticType(LOSSES_KEY, "LOSSES", LOSSES_DESCRIPTION, false, 0, key()),
+                statisticTypeService.findOrCreateStatisticType(WIN_STREAK_KEY, "WIN_STREAK", WIN_STREAK_DESCRIPTION, true, 0, key()),
+                statisticTypeService.findOrCreateStatisticType(LOSS_STREAK_KEY, "LOSS_STREAK", LOSS_STREAK_DESCRIPTION, false, 0, key()),
+                statisticTypeService.findOrCreateStatisticType(WIN_PCT_KEY, "WIN_PCT", WIN_PCT_DESCRIPTION, true, 4, key()));
     }
 
     @Override
     public List<TeamStatistic> generate(Season season) {
-        StatisticType winsType = statisticTypeService.findStatisticType("WINS");
-        StatisticType lossesType = statisticTypeService.findStatisticType("LOSSES");
-        StatisticType winStreakType = statisticTypeService.findStatisticType("WIN_STREAK");
-        StatisticType lossStreakType = statisticTypeService.findStatisticType("LOSS_STREAK");
-        StatisticType winningPctType = statisticTypeService.findStatisticType("WIN_PCT");
+        StatisticType winsType = statisticTypeService.findStatisticType(WINS_KEY);
+        StatisticType lossesType = statisticTypeService.findStatisticType(LOSSES_KEY);
+        StatisticType winStreakType = statisticTypeService.findStatisticType(WIN_STREAK_KEY);
+        StatisticType lossStreakType = statisticTypeService.findStatisticType(LOSS_STREAK_KEY);
+        StatisticType winningPctType = statisticTypeService.findStatisticType(WIN_PCT_KEY);
 
         // Get all games for the season ordered by date
         List<Game> games = gameRepository.findBySeasonOrderByDateAsc(season);

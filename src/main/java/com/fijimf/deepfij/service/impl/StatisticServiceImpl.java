@@ -11,6 +11,7 @@ import com.fijimf.deepfij.repo.SeasonRepository;
 import com.fijimf.deepfij.repo.StatisticTypeRepository;
 import com.fijimf.deepfij.repo.TeamStatisticRepository;
 import com.fijimf.deepfij.service.StatisticService;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -69,7 +70,7 @@ public class StatisticServiceImpl implements StatisticService {
         int count = values.size();
         BigDecimal min = values.getFirst();
         BigDecimal max = values.get(count - 1);
-        
+
         // Calculate quartiles
         BigDecimal q1 = calculateQuartile(values, 0.25);
         BigDecimal median = calculateQuartile(values, 0.5);
@@ -96,15 +97,15 @@ public class StatisticServiceImpl implements StatisticService {
         double position = (size - 1) * percentile;
         int lowerIndex = (int) Math.floor(position);
         int upperIndex = (int) Math.ceil(position);
-        
+
         if (lowerIndex == upperIndex) {
             return sortedValues.get(lowerIndex);
         }
-        
+
         BigDecimal lowerValue = sortedValues.get(lowerIndex);
         BigDecimal upperValue = sortedValues.get(upperIndex);
         double weight = position - lowerIndex;
-        
+
         return lowerValue.add(upperValue.subtract(lowerValue).multiply(BigDecimal.valueOf(weight)))
                 .setScale(4, RoundingMode.HALF_UP);
     }
@@ -120,35 +121,45 @@ public class StatisticServiceImpl implements StatisticService {
         List<TeamStatistic> teamStatisticList = statistics.stream()
                 .filter(stat -> stat.getNumericValue() != null)
                 .sorted((a, b) -> {
-                    int comparison = a.getNumericValue().compareTo(b.getNumericValue());
+                    int comparison = a.getNumericValue().compareTo(b.getNumericValue()); //top down
                     return Boolean.TRUE.equals(statisticType.getIsHigherBetter()) ?
                             -comparison : // Higher is better, so reverse the comparison
                             comparison;   // Lower is better, so keep the comparison
                 })
                 .collect(Collectors.toList());
-        return limit<=0?teamStatisticList:teamStatisticList.subList(0, limit);
+        return limit <= 0 ? teamStatisticList : teamStatisticList.subList(0, limit);
     }
 
-    public StatSummaryPage getStatSummaryPage(int seasonYear, String statisticTypeName) {
-        Season season = seasonRepository.findByYear(seasonYear).stream().findFirst().orElseThrow(() -> new IllegalArgumentException("Season not found: " + seasonYear));
-        StatisticType statisticType = statisticTypeRepository.findByName(statisticTypeName)
-                 .orElseThrow(() -> new IllegalArgumentException("Statistic type not found: " + statisticTypeName));
-        List<TeamStatistic> topTeamsByDate = getTopTeamsByDate(season.getId(), statisticTypeName, season.getGames().stream().filter(Game::isComplete).map(Game::getDate).toList().getLast(), 0);
-        List<TeamStatisticStub> teamStatisticStubs = new ArrayList<>();
-        BigDecimal last=null;
-        for(int i=0, rk=0;i<topTeamsByDate.size();i++){
-            TeamStatistic teamStatistic = topTeamsByDate.get(i);
-            if (i==0) {
-                rk=1;
-            } else if (last.compareTo(teamStatistic.getNumericValue())!=0) {
-                rk =i+1;
-            }
-            last=teamStatistic.getNumericValue();
-            teamStatisticStubs.add(TeamStatisticStub.fromTeamStatistic( teamStatistic, rk));
+    public StatSummaryPage getStatSummaryPage(String statisticTypeName, Season season) {
+        LocalDate last = season.getGames().stream().filter(Game::isComplete).map(Game::getDate).toList().getLast();
+        return getStatSummaryPage(statisticTypeName, season, last);
+    }
 
-        }
-        List<StatisticSummary> statisticSummaryList = getStatisticSummariesBySeasonAndType(season.getId(), statisticTypeName);
-        return new StatSummaryPage(statisticType.getName(), statisticType.getDescription(), statisticType.getIsHigherBetter(), statisticType.getDecimalPlaces(), seasonYear, teamStatisticStubs, statisticSummaryList);
+    public StatSummaryPage getStatSummaryPage(String statisticTypeName, Season season, LocalDate date) {
+
+        StatisticType statisticType = statisticTypeRepository.findByName(statisticTypeName)
+                .orElseThrow(() -> new IllegalArgumentException("Statistic type not found: " + statisticTypeName));
+        List<TeamStatistic> teamStatistics = getTopTeamsByDate(season.getId(), statisticTypeName, season.getGames().stream().filter(Game::isComplete).map(Game::getDate).toList().getLast(), 0);
+        SortedMap<LocalDate, DescriptiveStatistics> descriptiveStatsByDate = getDescriptiveTimeSeries(statisticTypeName, season);
+        return StatSummaryPage.create(season,date,  statisticType, teamStatistics, descriptiveStatsByDate);
+
+    }
+
+    private SortedMap<LocalDate, DescriptiveStatistics> getDescriptiveTimeSeries(String statisticTypeName, Season season) {
+        StatisticType statisticType = statisticTypeRepository.findByName(statisticTypeName)
+                .orElseThrow(() -> new IllegalArgumentException("Statistic type not found: " + statisticTypeName));
+        List<TeamStatistic> statistics = teamStatisticRepository.findBySeasonIdAndStatisticTypeId(
+                season.getId(), statisticType.getId());
+        Map<LocalDate, List<TeamStatistic>> statsByDate = statistics.stream()
+                .collect(Collectors.groupingBy(TeamStatistic::getStatisticDate));
+        SortedMap<LocalDate, DescriptiveStatistics> data = new TreeMap<>();
+        statsByDate.forEach((k, v) -> {
+            DescriptiveStatistics descriptiveStatistics = new DescriptiveStatistics();
+            v.stream().filter(s -> s.getNumericValue() != null).forEach(t -> descriptiveStatistics.addValue(t.getNumericValue().doubleValue()));
+            data.put(k, descriptiveStatistics);
+        });
+        return data;
+
 
     }
 } 
