@@ -162,4 +162,8 @@ public class StatisticServiceImpl implements StatisticService {
 
 
     }
-} 
+
+    public List<String> getModelStats() {
+        return statisticTypeRepository.findAll().stream().map(StatisticType::getCode).toList();
+    }
+}

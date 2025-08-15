@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Map;
 import java.util.Objects;
 
 @Entity
@@ -466,4 +467,16 @@ public class Game {
 
     public boolean isConferenceGame(){
         return getHomeTeamConference().equals(getAwayTeamConference()); }
+
+    public boolean isInConference(Team team, Map<Team, Conference> conferenceMap) {
+        if (!hasTeam(team) || !conferenceMap.containsKey(team)) {
+            return false;
+        }
+        
+        Conference teamConference = conferenceMap.get(team);
+        Team opponent = getOpponent(team);
+        
+        return conferenceMap.containsKey(opponent) && 
+               teamConference.equals(conferenceMap.get(opponent));
+    }
 }
