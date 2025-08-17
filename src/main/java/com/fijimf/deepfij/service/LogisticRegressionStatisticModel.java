@@ -8,9 +8,13 @@ import com.fijimf.deepfij.model.statistics.TeamStatistic;
 import com.fijimf.deepfij.repo.TeamRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import jakarta.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -29,6 +33,20 @@ public class LogisticRegressionStatisticModel implements StatisticalModel {
         this.statisticTypeService = statisticTypeService;
         this.restTemplate = new RestTemplate();
         this.apiUrl = apiUrl;
+    }
+
+    @PostConstruct
+    public void checkBackendHealth() {
+        try {
+            String healthUrl = apiUrl + "/api/health";
+            ResponseEntity<String> response = restTemplate.getForEntity(healthUrl, String.class);
+            
+            if (response.getStatusCode() != HttpStatus.OK) {
+                throw new RuntimeException("Backend model server health check failed with status: " + response.getStatusCode());
+            }
+        } catch (RestClientException e) {
+            throw new RuntimeException("Failed to connect to backend model server at " + apiUrl + "/api/health", e);
+        }
     }
 
     @Override
