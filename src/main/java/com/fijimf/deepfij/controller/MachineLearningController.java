@@ -37,30 +37,6 @@ public class MachineLearningController {
     }
 
     /**
-     * Returns a list of available model definitions.
-     * 
-     * @return Map of model keys to model names
-     */
-    @GetMapping("/models")
-    public ResponseEntity<ApiResponse<List<String>>> getAvailableModels() {
-        return ResponseEntity.ok(ApiResponse.success(machineLearningService.getKeys()));
-    }
-
-    /**
-     * Returns model data for a specific model and season.
-     * 
-     * @param key The model key
-     * @param year The (optional) season year
-     * @return ResponseEntity containing the model data, or 404 if the model or season was not found
-     */
-    @GetMapping("/train/{key}")
-    public ResponseEntity<ApiResponse<Map<String, String>>> getModelData(
-            @PathVariable String key, @RequestParam(required = false) Integer year) {
-        ModelData modelData = machineLearningService.getModelData(key, year);
-        String url = "http://127.0.0.1:5000/train";
-        return ResponseEntity.ok(ApiResponse.success(restTemplate.postForObject(url, modelData, Map.class)));
-    }
-    /**
      * Returns model data for a specific model and season up to a specific date.
      * 
      * @param key The model key

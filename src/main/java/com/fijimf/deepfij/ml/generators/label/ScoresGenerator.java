@@ -1,4 +1,4 @@
-package com.fijimf.deepfij.ml.generators.target;
+package com.fijimf.deepfij.ml.generators.label;
 
 import com.fijimf.deepfij.ml.TargetGenerator;
 import com.fijimf.deepfij.model.schedule.Game;
