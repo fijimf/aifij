@@ -1,4 +1,4 @@
-package com.fijimf.deepfij.service;
+package com.fijimf.deepfij.service.stat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fijimf.deepfij.model.schedule.Season;
@@ -6,6 +6,8 @@ import com.fijimf.deepfij.model.schedule.Team;
 import com.fijimf.deepfij.model.statistics.StatisticType;
 import com.fijimf.deepfij.model.statistics.TeamStatistic;
 import com.fijimf.deepfij.repo.TeamRepository;
+import com.fijimf.deepfij.service.StatisticTypeService;
+import com.fijimf.deepfij.service.StatisticalModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -21,14 +23,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class LogisticRegressionStatisticModel implements StatisticalModel {
+public class LinearRegressionStatisticModel implements StatisticalModel {
     private final RestTemplate restTemplate;
     private final TeamRepository teamRepository;
     private final StatisticTypeService statisticTypeService;
     private final String apiUrl;
 
     @Autowired
-    public LogisticRegressionStatisticModel(TeamRepository teamRepository, StatisticTypeService statisticTypeService, @Value("${pystats.api.url:http://127.0.0.1:5000}") String apiUrl) {
+    public LinearRegressionStatisticModel(TeamRepository teamRepository, StatisticTypeService statisticTypeService, @Value("${pystats.api.url:http://127.0.0.1:5000}") String apiUrl) {
         this.teamRepository = teamRepository;
         this.statisticTypeService = statisticTypeService;
         this.restTemplate = new RestTemplate();
@@ -51,18 +53,18 @@ public class LogisticRegressionStatisticModel implements StatisticalModel {
 
     @Override
     public String key() {
-        return "LOGISTIC_REGRESSION";
+        return "LINEAR_REGRESSION";
     }
 
     @Override
     public List<StatisticType> refreshDBTypes() {
-         return List.of(statisticTypeService.findOrCreateStatisticType("LOGISTIC_REGRESSION", "LOGISTIC_REGRESSION", "Logistic Regression", true, 4, key()));
+        return List.of(statisticTypeService.findOrCreateStatisticType("LINEAR_REGRESSION", "LINEAR_REGRESSION", "Linear Regression", true, 4, key()));
     }
 
     @Override
     public List<TeamStatistic> generate(Season season) {
-        StatisticType type = statisticTypeService.findStatisticType("LOGISTIC_REGRESSION");
-        String url = String.format(apiUrl +"/api/rankings/logistic?year=%d", season.getYear());
+        StatisticType type = statisticTypeService.findStatisticType("LINEAR_REGRESSION");
+        String url = String.format(apiUrl + "/api/rankings/lse?year=%d", season.getYear());
         JsonNode response = restTemplate.getForObject(url, JsonNode.class);
         List<TeamStatistic> statistics = new ArrayList<>();
         if (response != null && response.has("data")) {

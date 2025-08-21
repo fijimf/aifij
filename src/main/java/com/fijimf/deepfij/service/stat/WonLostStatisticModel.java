@@ -1,4 +1,4 @@
-package com.fijimf.deepfij.service;
+package com.fijimf.deepfij.service.stat;
 
 import com.fijimf.deepfij.model.schedule.Game;
 import com.fijimf.deepfij.model.schedule.Season;
@@ -6,6 +6,9 @@ import com.fijimf.deepfij.model.schedule.Team;
 import com.fijimf.deepfij.model.statistics.StatisticType;
 import com.fijimf.deepfij.model.statistics.TeamStatistic;
 import com.fijimf.deepfij.repo.GameRepository;
+import com.fijimf.deepfij.service.StatisticTypeService;
+import com.fijimf.deepfij.service.StatisticalModel;
+import com.fijimf.deepfij.service.TeamStatisticBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
