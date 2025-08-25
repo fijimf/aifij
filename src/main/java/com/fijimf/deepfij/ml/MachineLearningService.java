@@ -16,8 +16,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Service
@@ -145,4 +148,73 @@ public class MachineLearningService {
 
     }
 
+    public void loadPredictions(Model model, ModelRun modelRun, Map<String, String> queryParams) {
+        List<Game> games = loadGames(queryParams);
+        List<Map<String, Object>> features = games.stream().map(models.get(model.getName())::features).collect(Collectors.toList());
+        Map<String, Object> body = Map.of("features", features);
+        String url = apiUrl + "/ml/predict?model_name=" + model.getName() + "&model_run_id=" + modelRun.getId();
+        logger.info("URL = "+url);
+        ResponseEntity<String> resp = restTemplate.postForEntity(url, body, String.class);
+        logger.info("Response = "+resp);
+        logger.info("Loaded predictions for model: {}", model.getName());
+    }
+
+    private List<Game> loadGames(Map<String, String> queryParams) {
+        if (queryParams.containsKey("seasons")) {
+             List<Game> games =Arrays.stream(queryParams.get("seasons").split(","))
+                     .map(Integer::parseInt)
+                     .flatMap(year ->
+                        seasonRepository.findByYear(year).stream()
+                                .flatMap(season -> season.getGames().stream())
+             ).toList();
+             return applyFilters(queryParams, games);
+        } else if (queryParams.containsKey("dates")) {
+            List<Game> games =Arrays.stream(queryParams.get("dates")
+                    .split(","))
+                    .map(s-> LocalDate.parse(s,  DateTimeFormatter.ofPattern("yyyyMMdd")))
+                    .map(MachineLearningService::dateToSeasonYear)
+                    .flatMap(year ->
+                            seasonRepository.findByYear(year).stream()
+                                    .flatMap(season -> season.getGames().stream())
+                    ).toList();
+            return applyFilters(queryParams, games);
+
+        } else if (queryParams.containsKey("gameIds")){
+            return gameRepository.findAllById(Arrays.stream(queryParams.get("gameIds").split(",")).map(Long::parseLong).toList());
+        } else {
+            throw new IllegalArgumentException("Must specify seasons, dates or gameIds");
+        }
+    }
+
+    private List<Game> applyFilters(Map<String, String> queryParams, List<Game> games) {
+        List<Predicate<Game>> filters = new ArrayList<>();
+
+        if (queryParams.containsKey("dates")) {
+            Set<LocalDate> dates = Arrays.stream(queryParams.get("dates")
+                            .split(","))
+                    .map(s -> LocalDate.parse(s, DateTimeFormatter.ofPattern("yyyyMMdd"))).collect(Collectors.toSet());
+            filters.add(g -> dates.contains(g.getDate()));
+        }
+        if (queryParams.containsKey("team")) {
+            String team = queryParams.get("team");
+            filters.add(g -> g.getHomeTeam().getName().equals(team) || g.getAwayTeam().getName().equals(team));
+        }
+        if (queryParams.containsKey("skipPlayed")) {
+            filters.add(Game::isComplete);
+        }
+        if (filters.isEmpty()) {
+            return games;
+        } else {
+            return games.stream().filter(g -> filters.stream().allMatch(f -> f.test(g))).collect(Collectors.toList());
+        }
+    }
+
+    private static int dateToSeasonYear(LocalDate date) {
+        if (date.getMonthValue()<5) return date.getYear();
+        else if (date.getMonthValue()>10) return date.getYear()+1;
+        else throw new IllegalArgumentException("Non seasonal date" + date);
+    }
+    private List<Game> loadGames(String seasons, Map<String, String> queryParams) {
+        return null;
+    }
 }

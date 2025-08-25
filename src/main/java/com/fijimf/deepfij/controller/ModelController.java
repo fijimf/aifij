@@ -150,6 +150,13 @@ public class ModelController {
             @RequestParam Map<String, String> queryParams) {
         logger.info("Making prediction with model id: {}, run id: {} and params: {}", id, runId, queryParams);
         try {
+
+            Optional<Model> modelOpt = modelRepository.findById(id);
+            if (!modelOpt.isPresent()) {
+                return ResponseEntity.notFound().build();
+            }
+            Model model = modelOpt.get();
+
             Optional<ModelRun> modelRunOpt = modelRunRepository.findById(runId);
             if (!modelRunOpt.isPresent()) {
                 return ResponseEntity.notFound().build();
@@ -164,12 +171,13 @@ public class ModelController {
             }
 
             // Verify the model run is completed and has a trained pipeline
-            if (!"COMPLETED".equals(modelRun.getRunStatus())) {
+            if (!"SUCCESS".equals(modelRun.getRunStatus())) {
                 return ResponseEntity.badRequest()
                         .body(ApiResponse.error("Model run is not completed. Current status: " + modelRun.getRunStatus()));
             }
 
             // TODO: Implement actual prediction logic
+            mlService.loadPredictions(model, modelRun, queryParams);
             // This should:
             // 1. Load the trained model pipeline from modelRun.getRunResult()
             // 2. Process the query parameters as input features
