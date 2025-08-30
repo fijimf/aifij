@@ -1,5 +1,6 @@
 package com.fijimf.deepfij.ml;
 
+import com.fijimf.deepfij.model.ml.GamePrediction;
 import com.fijimf.deepfij.model.ml.Model;
 import com.fijimf.deepfij.model.ml.ModelRun;
 import com.fijimf.deepfij.model.schedule.Game;
@@ -131,7 +132,7 @@ public class MachineLearningService {
         List<Map<String, Object>> features = new ArrayList<>();
         List<Map<String, Object>> labels = new ArrayList<>();
 
-        games.forEach(g -> {
+        games.stream().filter(Game::isComplete).forEach(g -> {
             features.add(models.get(model.getName()).features(g));
             labels.add(models.get(model.getName()).labels(g));
         });
@@ -148,15 +149,16 @@ public class MachineLearningService {
 
     }
 
-    public void loadPredictions(Model model, ModelRun modelRun, Map<String, String> queryParams) {
+    public String loadPredictions(Model model, ModelRun modelRun, Map<String, String> queryParams) {
         List<Game> games = loadGames(queryParams);
-        List<Map<String, Object>> features = games.stream().map(models.get(model.getName())::features).collect(Collectors.toList());
+        List<Map<String, Object>> features = games.stream().map(models.get(model.getName())::features).toList();
         Map<String, Object> body = Map.of("features", features);
         String url = apiUrl + "/ml/predict?model_name=" + model.getName() + "&model_run_id=" + modelRun.getId();
         logger.info("URL = "+url);
         ResponseEntity<String> resp = restTemplate.postForEntity(url, body, String.class);
         logger.info("Response = "+resp);
         logger.info("Loaded predictions for model: {}", model.getName());
+        return resp.getBody();
     }
 
     private List<Game> loadGames(Map<String, String> queryParams) {

@@ -9,6 +9,8 @@ public interface ModelImpl {
     String name();
     String description();
     String type();
+    List<String> featureNames();
+    List<String> labelNames();
     Map<String, Object> features(Game game);
     Map<String, Object> labels(Game games);
  }

@@ -177,7 +177,8 @@ public class ModelController {
             }
 
             // TODO: Implement actual prediction logic
-            mlService.loadPredictions(model, modelRun, queryParams);
+           String s= mlService.loadPredictions(model, modelRun, queryParams);
+            System.err.println(s);
             // This should:
             // 1. Load the trained model pipeline from modelRun.getRunResult()
             // 2. Process the query parameters as input features

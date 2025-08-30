@@ -26,6 +26,16 @@ public class MarginNaiveLinearRegression implements ModelImpl {
     }
 
     @Override
+    public List<String> featureNames() {
+        return List.of("homeTeam", "awayTeam");
+    }
+
+    @Override
+    public List<String> labelNames() {
+        return List.of("margin");
+    }
+
+    @Override
     public Map<String, Object> features(Game games) {
         return Map.of("homeTeam", games.getHomeTeam().getAbbreviation(),
                 "awayTeam", games.getAwayTeam().getAbbreviation());
