@@ -8,6 +8,8 @@ import com.fijimf.deepfij.model.statistics.TeamStatistic;
 import com.fijimf.deepfij.repo.TeamRepository;
 import com.fijimf.deepfij.service.StatisticTypeService;
 import com.fijimf.deepfij.service.StatisticalModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,7 @@ import java.util.List;
 
 @Service
 public class LinearRegressionStatisticModel implements StatisticalModel {
+    private static final Logger logger = LoggerFactory.getLogger(LinearRegressionStatisticModel.class);
     private final RestTemplate restTemplate;
     private final TeamRepository teamRepository;
     private final StatisticTypeService statisticTypeService;
@@ -44,10 +47,10 @@ public class LinearRegressionStatisticModel implements StatisticalModel {
             ResponseEntity<String> response = restTemplate.getForEntity(healthUrl, String.class);
             
             if (response.getStatusCode() != HttpStatus.OK) {
-                throw new RuntimeException("Backend model server health check failed with status: " + response.getStatusCode());
+                logger.warn("Backend model server health check failed with status: " + response.getStatusCode());
             }
         } catch (RestClientException e) {
-            throw new RuntimeException("Failed to connect to backend model server at " + apiUrl + "/api/health", e);
+            logger.warn("Failed to connect to backend model server at " + apiUrl + "/api/health", e);
         }
     }
 
