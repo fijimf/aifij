@@ -50,7 +50,7 @@ public class LogisticRegressionStatisticModel implements StatisticalModel {
                 logger.warn("Backend model server health check failed with status: " + response.getStatusCode());
             }
         } catch (RestClientException e) {
-            logger.warn("Failed to connect to backend model server at " + apiUrl + "/api/health", e);
+            logger.warn("Failed to connect to backend model server at " + apiUrl + "/api/health");
         }
     }
 
