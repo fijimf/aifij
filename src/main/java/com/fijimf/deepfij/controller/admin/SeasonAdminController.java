@@ -35,8 +35,11 @@ public class SeasonAdminController {
     @PostMapping("/new")
     public ResponseEntity<ApiResponse<ScheduleService.ScheduleStatus>> loadSeason(HttpServletRequest httpServletRequest, @RequestParam int seasonYear) {
         User user = controllerUtil.getUser(httpServletRequest);
-        scheduleService.createSchedule(seasonYear, user);
-        return ResponseEntity.ok(ApiResponse.success(scheduleService.getStatus()));
+        if (scheduleService.createSchedule(seasonYear, user)) {
+            return ResponseEntity.ok(ApiResponse.success(scheduleService.getStatus()));
+        } else {
+            return ResponseEntity.status(400).body(ApiResponse.error("Unable to create season for year: "+seasonYear+".  Please check logs for details."));
+        }
     }
 
     @PostMapping("/drop/{seasonYear}")

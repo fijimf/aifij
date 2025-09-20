@@ -231,7 +231,7 @@ public class ScheduleService {
     }
 
     @Transactional
-    public void createSchedule(int yyyy, User user) {
+    public boolean createSchedule(int yyyy, User user) {
 
         if (teamRepository.count() == 0) {
             loadTeams(user);
@@ -241,16 +241,17 @@ public class ScheduleService {
         }
 
         Season s = findOrCreate(yyyy, user);
-        long mappingsDeleted = deleteMappings(s, user);
+        long conferenceMappings = createConferenceMappings(yyyy, s);
 
-        logger.info("Deleted " + mappingsDeleted + " mappings for season " + s.getName());
-        createConferenceMappings(yyyy, s, user);
-
-        logger.info("For " + yyyy + " there are " + conferenceMappingRepository.count() + " teams");
-        LocalDateTime start = LocalDateTime.now();
-        getGamesForRange(user, s, s.getStartDate(), s.getEndDate());
-        LocalDateTime end = LocalDateTime.now();
-        auditRepository.save(new Audit(0L, "createSchedule", "%d games fetched".formatted(gameRepository.count()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
+        logger.info("For {} there are {} teams", yyyy, conferenceMappings);
+        if (conferenceMappings == 0) {
+            logger.error("Since no teams are found for {}, the schedule will not be created.", yyyy);
+            seasonRepository.deleteById(s.getId());
+            return false;
+        } else {
+            getGamesForRange(user, s, s.getStartDate(), s.getEndDate());
+            return true;
+        }
     }
 
     private void getGamesForRange(User user, Season s, LocalDate startDate, LocalDate endDate) {
@@ -262,8 +263,7 @@ public class ScheduleService {
         );
     }
 
-    private void createConferenceMappings(int yyyy, Season s, User user) {
-        LocalDateTime start = LocalDateTime.now();
+    private long createConferenceMappings(int yyyy, Season s) {
         StandingsResponse standingsResponse = scrapingService.fetchStandings(yyyy);
         standingsResponse.children().stream().filter(ConferenceStanding::isConference).forEach(cs -> {
             Conference c = findOrCreateConference(cs);
@@ -282,8 +282,7 @@ public class ScheduleService {
                 }
             });
         });
-        LocalDateTime end = LocalDateTime.now();
-        auditRepository.save(new Audit(0L, "createConferenceMappings", "%d standings fetched".formatted(standingsResponse.children().size()), Timestamp.valueOf(start), Timestamp.valueOf(end), user));
+        return conferenceMappingRepository.countAllBySeasonEquals(s);
     }
 
     private long deleteMappings(Season s, User user) {
