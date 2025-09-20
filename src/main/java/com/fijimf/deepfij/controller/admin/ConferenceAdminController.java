@@ -34,16 +34,14 @@ public class ConferenceAdminController {
     }
 
     @PostMapping("/load")
-    public ResponseEntity<ApiResponse<ScheduleService.ConferenceStatus>> loadConferences(HttpServletRequest httpServletRequest) {
-        User user = controllerUtil.getUser(httpServletRequest);
-        List<Conference> conferences = scheduleService.loadConferences(user);
+    public ResponseEntity<ApiResponse<ScheduleService.ConferenceStatus>> loadConferences() {
+        List<Conference> conferences = scheduleService.loadConferences();
         return ResponseEntity.ok(ApiResponse.success(scheduleService.getConferenceStatus()));
     }
 
     @PostMapping("/drop")
-    public ResponseEntity<ApiResponse<ScheduleService.ConferenceStatus>> dropConferences(HttpServletRequest httpServletRequest) {
-        User user = controllerUtil.getUser(httpServletRequest);
-        int count = scheduleService.dropConferences(user);
+    public ResponseEntity<ApiResponse<ScheduleService.ConferenceStatus>> dropConferences() {
+        int count = scheduleService.dropConferences();
         return ResponseEntity.ok(ApiResponse.success(scheduleService.getConferenceStatus()));
     }
 

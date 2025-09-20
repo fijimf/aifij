@@ -33,9 +33,8 @@ public class SeasonAdminController {
 
 
     @PostMapping("/new")
-    public ResponseEntity<ApiResponse<ScheduleService.ScheduleStatus>> loadSeason(HttpServletRequest httpServletRequest, @RequestParam int seasonYear) {
-        User user = controllerUtil.getUser(httpServletRequest);
-        if (scheduleService.createSchedule(seasonYear, user)) {
+    public ResponseEntity<ApiResponse<ScheduleService.ScheduleStatus>> loadSeason(@RequestParam int seasonYear) {
+        if (scheduleService.createSchedule(seasonYear)) {
             return ResponseEntity.ok(ApiResponse.success(scheduleService.getStatus()));
         } else {
             return ResponseEntity.status(400).body(ApiResponse.error("Unable to create season for year: "+seasonYear+".  Please check logs for details."));
@@ -43,17 +42,14 @@ public class SeasonAdminController {
     }
 
     @PostMapping("/drop/{seasonYear}")
-    public ResponseEntity<ApiResponse<ScheduleService.ScheduleStatus>> dropSeason(@PathVariable int seasonYear,  HttpServletRequest httpServletRequest) {
-        User user = controllerUtil.getUser(httpServletRequest);
-        int count = scheduleService.dropSeason(seasonYear, user);
+    public ResponseEntity<ApiResponse<ScheduleService.ScheduleStatus>> dropSeason(@PathVariable int seasonYear) {
+        int count = scheduleService.dropSeason(seasonYear);
         return ResponseEntity.ok(ApiResponse.success(scheduleService.getStatus()));
     }
 
     @GetMapping("/refresh/{seasonYear}")
-    public ResponseEntity<ApiResponse<ScheduleService.ScheduleStatus>> fetchGames(@PathVariable int seasonYear, HttpServletRequest httpServletRequest) {
-        // Parse the date string into LocalDate
-        User user = controllerUtil.getUser(httpServletRequest);
-        scheduleService.refresh(seasonYear, user);
+    public ResponseEntity<ApiResponse<ScheduleService.ScheduleStatus>> fetchGames(@PathVariable int seasonYear) {
+        scheduleService.refresh(seasonYear);
         return ResponseEntity.ok(ApiResponse.success(scheduleService.getStatus()));
     }
 

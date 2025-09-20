@@ -22,7 +22,6 @@ import com.fijimf.deepfij.model.schedule.ConferenceMapping;
 import com.fijimf.deepfij.model.schedule.Game;
 import com.fijimf.deepfij.model.schedule.Season;
 import com.fijimf.deepfij.model.schedule.Team;
-import com.fijimf.deepfij.repo.AuditRepository;
 import com.fijimf.deepfij.repo.ConferenceMappingRepository;
 import com.fijimf.deepfij.repo.ConferenceRepository;
 import com.fijimf.deepfij.repo.GameRepository;
@@ -52,8 +51,6 @@ class ScheduleServiceTest {
     @Mock
     private SeasonRepository seasonRepository;
 
-    @Mock
-    private AuditRepository auditRepository;
 
     @Mock
     private TeamStatisticRepository teamStatisticRepository;
@@ -84,7 +81,6 @@ class ScheduleServiceTest {
             conferenceMappingRepository,
             gameRepository,
             seasonRepository,
-            auditRepository,
             null, // EntityManager not needed for these tests
             teamStatisticRepository
         );

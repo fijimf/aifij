@@ -30,16 +30,14 @@ public class TeamAdminController {
     }
 
     @PostMapping("/load")
-    public ResponseEntity<ApiResponse<ScheduleService.TeamStatus>> loadTeams(HttpServletRequest httpServletRequest) {
-        User user = controllerUtil.getUser(httpServletRequest);
-        scheduleService.loadTeams(user);
+    public ResponseEntity<ApiResponse<ScheduleService.TeamStatus>> loadTeams() {
+        scheduleService.loadTeams();
         return ResponseEntity.ok(ApiResponse.success(scheduleService.getTeamStatus()));
     }
 
     @PostMapping("/drop")
-    public ResponseEntity<ApiResponse<ScheduleService.TeamStatus>> dropTeams(HttpServletRequest httpServletRequest) {
-        User user = controllerUtil.getUser(httpServletRequest);
-        scheduleService.dropTeams(user);
+    public ResponseEntity<ApiResponse<ScheduleService.TeamStatus>> dropTeams() {
+        scheduleService.dropTeams();
         return ResponseEntity.ok(ApiResponse.success(scheduleService.getTeamStatus()));
     }
 

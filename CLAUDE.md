@@ -53,7 +53,7 @@ This is AI DeepFij, a Spring Boot application for college basketball data analys
 - Statistics entities in `model/statistics/` (StatisticType, TeamStatistic)
 - Machine Learning entities in `model/ml/` (Model, ModelRun, ModelRunParams, ModelRunMetrics)
 - User management entities (User, Role) with JWT authentication
-- Additional features: InspirationalQuote, Audit, ConferenceMapping
+- Additional features: InspirationalQuote, ConferenceMapping
 - Repositories in `repo/` extend JpaRepository
 - Flyway migrations in `src/main/resources/db/migration/`
 
@@ -123,7 +123,6 @@ This is AI DeepFij, a Spring Boot application for college basketball data analys
 ### Database Operations
 - All database schema changes via Flyway migrations
 - Use JPQL for custom repository queries
-- Audit trail maintained in `audit` table for admin operations
 
 ### Testing
 - Unit tests for repositories using Testcontainers

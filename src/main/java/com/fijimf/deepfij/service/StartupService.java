@@ -48,7 +48,7 @@ public class StartupService {
     public void onApplicationReady() {
         logger.info("Application startup complete - initializing admin user and checking schedule");
         User adminUser = initializeAdminUser();
-        checkAndInitializeSchedule(adminUser);
+        checkAndInitializeSchedule();
     }
     
     private User initializeAdminUser() {
@@ -66,7 +66,7 @@ public class StartupService {
         return u;
     }
     
-    private void checkAndInitializeSchedule(User adminUser) {
+    private void checkAndInitializeSchedule() {
         long teamCount = teamRepository.count();
         long conferenceCount = conferenceRepository.count();
         long gameCount = gameRepository.count();
@@ -75,13 +75,13 @@ public class StartupService {
         
         if (teamCount == 0 && conferenceCount == 0 && gameCount == 0) {
             logger.info("No schedule data found - initializing teams from ESPN");
-            scheduleService.loadTeams(adminUser);
-            scheduleService.loadConferences(adminUser);
+            scheduleService.loadTeams();
+            scheduleService.loadConferences();
             logger.info("Teams and conferences initialized");
 
             String[] years = seasonYears.split(",");
             for (String year : years) {
-                scheduleService.createSchedule(Integer.parseInt(year.trim()), adminUser);
+                scheduleService.createSchedule(Integer.parseInt(year.trim()));
             }
             logger.info("Schedule initialization completed");
         } else {
