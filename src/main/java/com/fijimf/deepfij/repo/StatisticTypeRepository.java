@@ -11,4 +11,5 @@ import com.fijimf.deepfij.model.statistics.StatisticType;
 public interface StatisticTypeRepository extends JpaRepository<StatisticType, Long> {
     Optional<StatisticType> findByCode(String code);
     Optional<StatisticType> findByName(String name);
+    java.util.List<StatisticType> findByModelKey(String modelKey);
 } 

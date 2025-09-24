@@ -9,17 +9,16 @@ import org.junit.jupiter.api.Test;
  * Test class for StartupService.
  * 
  * NOTE: Due to Java 23/Mockito/ByteBuddy compatibility issues documented in ScheduleServiceTest,
- * we cannot mock service classes like UserService or ScheduleService. This is a known limitation
+ * we cannot mock service classes like UserService or InitializationService. This is a known limitation
  * mentioned in existing tests. These compatibility issues prevent full testing of the startup logic.
  * 
  * The following edge cases cannot be tested due to mocking limitations:
  * 1. Admin user initialization when user exists vs. doesn't exist
- * 2. Schedule initialization based on different repository count combinations  
+ * 2. Configuration-based initialization logic via InitializationService
  * 3. Password generation and system property handling
  * 4. Integration testing of the complete startup workflow
  * 
- * These tests focus on what can be verified without mocking - basic construction and
- * configuration acceptance.
+ * These tests focus on what can be verified without mocking - basic construction.
  */
 class StartupServiceTest {
 
@@ -28,7 +27,7 @@ class StartupServiceTest {
         // Test basic construction without dependencies to avoid mocking issues
         
         StartupService service = new StartupService(
-            null, null, null, null, null, null, "2024,2025"
+            null, null, null
         );
 
         assertNotNull(service);
@@ -36,32 +35,20 @@ class StartupServiceTest {
     }
 
     @Test
-    void constructor_WithDifferentSeasonConfigurations_ShouldAcceptAllFormats() {
-        // Test that different season year configurations are accepted
+    void constructor_WithDifferentConfigurations_ShouldAcceptAllFormats() {
+        // Test that different configurations are accepted
         
-        // Single year
-        StartupService singleYear = new StartupService(
-            null, null, null, null, null, null, "2024"
+        // Basic construction
+        StartupService service1 = new StartupService(
+            null, null, null
         );
-        assertNotNull(singleYear);
-
-        // Multiple years  
-        StartupService multipleYears = new StartupService(
-            null, null, null, null, null, null, "2022,2023,2024,2025"
+        assertNotNull(service1);
+        
+        // Also basic construction - InitializationService handles configuration now
+        StartupService service2 = new StartupService(
+            null, null, null
         );
-        assertNotNull(multipleYears);
-
-        // Years with whitespace
-        StartupService whitespaceYears = new StartupService(
-            null, null, null, null, null, null, " 2023 , 2024 "
-        );
-        assertNotNull(whitespaceYears);
-
-        // Empty string (edge case)
-        StartupService emptyYears = new StartupService(
-            null, null, null, null, null, null, ""
-        );
-        assertNotNull(emptyYears);
+        assertNotNull(service2);
     }
 
     @Test
@@ -72,7 +59,7 @@ class StartupServiceTest {
         System.setProperty("admin.password", "TestPassword123!");
         try {
             StartupService service = new StartupService(
-                null, null, null, null, null, null, "2024"
+                null, null, null
             );
             
             // The getTempAdminPassword method should return the system property value
@@ -86,7 +73,7 @@ class StartupServiceTest {
         // Test with no system property (should generate password)
         System.clearProperty("admin.password");
         StartupService service2 = new StartupService(
-            null, null, null, null, null, null, "2024"
+            null, null, null
         );
         assertNotNull(service2);
         
@@ -100,14 +87,14 @@ class StartupServiceTest {
         // Test that the service follows expected Spring service patterns
         
         StartupService service = new StartupService(
-            null, null, null, null, null, null, "2024"
+            null, null, null
         );
         
         assertNotNull(service);
         
         // The service should be annotated with @Service (verified by compilation)
         // The service should have @EventListener method (verified by compilation)
-        // The service should accept @Value injected seasonYears (verified by compilation)
+        // The service now uses InitializationService for configuration-based startup
         
         // These structural elements are verified by successful compilation
         assertTrue(true, "StartupService structure follows Spring patterns");
@@ -121,18 +108,12 @@ class StartupServiceTest {
         // The constructor should accept:
         // - UserService (for admin user management)
         // - UserRepository (for user database operations) 
-        // - ScheduleService (for schedule initialization)
-        // - TeamRepository, ConferenceRepository, GameRepository (for data counts)
-        // - String seasonYears (for configuration)
+        // - InitializationService (for configurable database initialization)
         
         StartupService service = new StartupService(
             null, // UserService
             null, // UserRepository  
-            null, // ScheduleService
-            null, // TeamRepository
-            null, // ConferenceRepository
-            null, // GameRepository
-            "2024" // seasonYears
+            null  // InitializationService
         );
         
         assertNotNull(service);

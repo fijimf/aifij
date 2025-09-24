@@ -166,4 +166,29 @@ public class StatisticServiceImpl implements StatisticService {
     public List<String> getModelStats() {
         return statisticTypeRepository.findAll().stream().map(StatisticType::getCode).toList();
     }
+    
+    @Override
+    public void calculateStatisticsForSeason(Integer year, String statisticKey) {
+        // Find the season
+        List<Season> seasons = seasonRepository.findByYear(year);
+        if (seasons.isEmpty()) {
+            throw new IllegalArgumentException("Season not found for year: " + year);
+        }
+        
+        // Find the statistic type
+        List<StatisticType> statisticTypes = statisticTypeRepository.findByModelKey(statisticKey);
+        if (statisticTypes.isEmpty()) {
+            throw new IllegalArgumentException("Statistic type not found for key: " + statisticKey);
+        }
+        
+        // For now, just log that we would calculate statistics
+        // In a real implementation, you would calculate the actual statistics based on game results
+        System.out.println("Calculating statistics '" + statisticKey + "' for season " + year);
+        
+        // TODO: Implement actual statistic calculation logic based on games
+        // This would typically involve:
+        // 1. Getting all games for the season
+        // 2. Calculating the statistic values for each team/date
+        // 3. Persisting the results to the team_statistic table
+    }
 }

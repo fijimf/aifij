@@ -26,5 +26,7 @@ public interface GameRepository extends JpaRepository<Game, Long> {
 
     @Query("SELECT MAX(g.indexDate) FROM Game g WHERE g.season = ?1 AND g.homeScore IS NOT NULL AND g.awayScore IS NOT NULL")
     LocalDate findLastCompletedGameDate(Season season);
+    
+    long countBySeasonEquals(Season season);
 
 }

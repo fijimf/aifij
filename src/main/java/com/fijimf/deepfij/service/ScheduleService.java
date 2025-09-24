@@ -381,8 +381,9 @@ public class ScheduleService {
     }
 
     public void refresh(int seasonYear) {
-        Season season = seasonRepository.findByYear(seasonYear).getFirst();
-        if (season != null) {
+        List<Season> seasons = seasonRepository.findByYear(seasonYear);
+        if (!seasons.isEmpty()) {
+            Season season = seasons.getFirst();
             LocalDate startDate = getLastComplete(season.getGames()).minusDays(7);
             getGamesForRange(season, startDate, season.getEndDate());
         }

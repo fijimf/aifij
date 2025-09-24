@@ -34,4 +34,10 @@ public interface TeamStatisticRepository extends JpaRepository<TeamStatistic, Lo
             "group by model, stat, season", nativeQuery = true)
     List<Map<String,Object>> findSummary();
 
+    @Query(value = "select s.year, st.model_key, count(*) count from team_statistic ts\n" +
+            "inner join season s on s.id = ts.season_id\n" +
+            "inner join statistic_type st on st.id = ts.statistic_type_id\n" +
+            "group by s.year, st.model_key", nativeQuery = true)
+    List<Map<String,Object>> countTeamsBySeasonAndModel();
+
 }

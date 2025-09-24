@@ -12,9 +12,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.fijimf.deepfij.model.User;
-import com.fijimf.deepfij.repo.ConferenceRepository;
-import com.fijimf.deepfij.repo.GameRepository;
-import com.fijimf.deepfij.repo.TeamRepository;
 import com.fijimf.deepfij.repo.UserRepository;
 
 import jakarta.validation.constraints.NotNull;
@@ -26,29 +23,20 @@ public class StartupService {
     
     private final UserService userService;
     private final UserRepository userRepository;
-    private final ScheduleService scheduleService;
-    private final TeamRepository teamRepository;
-    private final ConferenceRepository conferenceRepository;
-    private final GameRepository gameRepository;
-    private final String seasonYears;
+    private final InitializationService initializationService;
     
-    public StartupService(UserService userService, UserRepository userRepository, ScheduleService scheduleService,
-                          TeamRepository teamRepository, ConferenceRepository conferenceRepository,
-                          GameRepository gameRepository, @Value("${deepfij.seasons_to_load}") String seasonYears) {
+    public StartupService(UserService userService, UserRepository userRepository, 
+                          InitializationService initializationService) {
         this.userService = userService;
         this.userRepository = userRepository;
-        this.scheduleService = scheduleService;
-        this.teamRepository = teamRepository;
-        this.conferenceRepository = conferenceRepository;
-        this.gameRepository = gameRepository;
-        this.seasonYears = seasonYears;
+        this.initializationService = initializationService;
     }
     
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
-        logger.info("Application startup complete - initializing admin user and checking schedule");
-        User adminUser = initializeAdminUser();
-        checkAndInitializeSchedule();
+        logger.info("Application startup complete - initializing admin user and database");
+        initializeAdminUser();
+        initializationService.performInitialization();
     }
     
     private User initializeAdminUser() {
@@ -66,28 +54,6 @@ public class StartupService {
         return u;
     }
     
-    private void checkAndInitializeSchedule() {
-        long teamCount = teamRepository.count();
-        long conferenceCount = conferenceRepository.count();
-        long gameCount = gameRepository.count();
-        
-        logger.info("Current data counts - Teams: {}, Conferences: {}, Games: {}", teamCount, conferenceCount, gameCount);
-        
-        if (teamCount == 0 && conferenceCount == 0 && gameCount == 0) {
-            logger.info("No schedule data found - initializing teams from ESPN");
-            scheduleService.loadTeams();
-            scheduleService.loadConferences();
-            logger.info("Teams and conferences initialized");
-
-            String[] years = seasonYears.split(",");
-            for (String year : years) {
-                scheduleService.createSchedule(Integer.parseInt(year.trim()));
-            }
-            logger.info("Schedule initialization completed");
-        } else {
-            logger.info("Schedule data already exists - skipping initialization");
-        }
-    }
     
     @NotNull
     private String getTempAdminPassword() {
