@@ -1,0 +1,38 @@
+{
+  "schedule": {
+    "loadTeams": "check",
+    "minTeams": 300,
+    "loadConferences": "check", 
+    "minConferences": 10,
+    "seasons": [
+      {
+        "year": 2024,
+        "loadGames": "check",
+        "isCurrent": false
+      },
+      {
+        "year": 2025,
+        "loadGames": "check",
+        "isCurrent": true
+      }
+    ]
+  },
+  "statistics": {
+    "statisticsToLoad": [
+      {
+        "key": "WONLOST",
+        "seasons": [2024, 2025]
+      }
+    ]
+  },
+  "models": {
+    "modelsToTrain": [
+      {
+        "name": "naive-linear-regression",
+        "parameters": {
+          "seasons": [2025]
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "schedule": {
+    "loadTeams": "never",
+    "minTeams": 300,
+    "loadConferences": "never",
+    "minConferences": 10,
+    "seasons": []
+  },
+  "statistics": {
+    "statisticsToLoad": []
+  },
+  "models": {
+    "modelsToTrain": []
+  }
+}

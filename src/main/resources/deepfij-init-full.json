@@ -1,0 +1,58 @@
+{
+  "schedule": {
+    "loadTeams": "check",
+    "minTeams": 300,
+    "loadConferences": "check",
+    "minConferences": 10,
+    "seasons": [
+      {
+        "year": 2023,
+        "loadGames": "check",
+        "isCurrent": false
+      },
+      {
+        "year": 2024,
+        "loadGames": "check", 
+        "isCurrent": false
+      },
+      {
+        "year": 2025,
+        "loadGames": "check",
+        "isCurrent": false
+      },
+      {
+        "year": 2026,
+        "loadGames": "check",
+        "isCurrent": true
+      }
+    ]
+  },
+  "statistics": {
+    "statisticsToLoad": [
+      {
+        "key": "WONLOST",
+        "seasons": [2023, 2024, 2025]
+      }, {
+        "key": "LOGISTIC_REGRESSION",
+        "seasons": [2023, 2024, 2025]
+      }, {
+        "key": "LINEAR_REGRESSION",
+        "seasons": [2023, 2024, 2025]
+      }, {
+        "key": "POINTS",
+        "seasons": [2023, 2024, 2025]
+      }
+    ]
+  },
+  "models": {
+    "modelsToTrain": [
+      {
+        "name": "naive-linear-regression",
+        "parameters": {
+          "seasons": [2025],
+          "trainingData": "games"
+        }
+      }
+    ]
+  }
+}
