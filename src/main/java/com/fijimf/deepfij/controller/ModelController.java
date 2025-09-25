@@ -68,7 +68,16 @@ public class ModelController {
     public ResponseEntity<ApiResponse<ModelRun>> trainModel(
             @PathVariable Long id,
             @RequestParam Map<String, String> queryParams) {
-            return ResponseEntity.ok(ApiResponse.success(mlService.trainModel(id, queryParams)));
+        logger.info("Training model with id: {} and params: {}", id, queryParams);
+        try {
+            ModelRun modelRun = mlService.prepareModelRun(id, queryParams);
+            mlService.startModelTraining(id, modelRun.getId(), queryParams);
+            return ResponseEntity.ok(ApiResponse.success(modelRun));
+        } catch (Exception e) {
+            logger.error("Error training model with id: {}", id, e);
+            return ResponseEntity.internalServerError()
+                    .body(ApiResponse.error("Failed to train model: " + e.getMessage()));
+        }
     }
 
     @GetMapping("/{id}/train/{runId}")

@@ -49,8 +49,7 @@
       {
         "name": "naive-linear-regression",
         "parameters": {
-          "seasons": [2025],
-          "trainingData": "games"
+          "seasons": "2025"
         }
       }
     ]

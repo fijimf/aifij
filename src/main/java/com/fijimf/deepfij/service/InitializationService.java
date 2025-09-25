@@ -3,6 +3,7 @@ package com.fijimf.deepfij.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fijimf.deepfij.config.initialization.*;
 import com.fijimf.deepfij.ml.MachineLearningService;
+import com.fijimf.deepfij.model.ml.ModelRun;
 import com.fijimf.deepfij.repo.*;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
@@ -11,6 +12,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.util.HashMap;
@@ -69,6 +72,7 @@ public class InitializationService {
         this.statisticalService = statisticalService;
     }
 
+    @Transactional
     public void performInitialization() {
         logger.info("Starting database initialization");
         long startTime = System.currentTimeMillis();
@@ -312,7 +316,11 @@ public class InitializationService {
                 modelConfig.parameters().forEach((key, value) ->
                         stringParams.put(key, value.toString()));
 
-                machineLearningService.trainModel(model.getId(), stringParams);
+                // First, create and save the ModelRun in current transaction
+                ModelRun modelRun = machineLearningService.prepareModelRun(model.getId(), new HashMap<>(stringParams));
+                
+                // Then start training in separate transaction so ModelRun is committed before ML server call
+                startTrainingInSeparateTransaction(model.getId(), modelRun.getId(), stringParams);
                 logger.info("Model '{}' training completed", modelConfig.name());
 
             } catch (Exception e) {
@@ -321,6 +329,11 @@ public class InitializationService {
         }
 
         logger.info("Model training completed");
+    }
+    
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void startTrainingInSeparateTransaction(Long modelId, Long modelRunId, Map<String, String> stringParams) {
+        machineLearningService.startModelTraining(modelId, modelRunId, stringParams);
     }
 
     private static class InitializationState {

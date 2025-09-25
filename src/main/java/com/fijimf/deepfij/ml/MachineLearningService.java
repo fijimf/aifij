@@ -1,6 +1,5 @@
 package com.fijimf.deepfij.ml;
 
-import com.fijimf.deepfij.model.ml.GamePrediction;
 import com.fijimf.deepfij.model.ml.Model;
 import com.fijimf.deepfij.model.ml.ModelRun;
 import com.fijimf.deepfij.model.schedule.Game;
@@ -8,13 +7,14 @@ import com.fijimf.deepfij.repo.GameRepository;
 import com.fijimf.deepfij.repo.ModelRepository;
 import com.fijimf.deepfij.repo.ModelRunRepository;
 import com.fijimf.deepfij.repo.SeasonRepository;
-import com.fijimf.deepfij.response.ApiResponse;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
@@ -111,21 +111,37 @@ public class MachineLearningService {
         logger.info("Model initialization complete");
     }
 
-    public ModelRun trainModel(Long modelId, Map<String, String> queryParams) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public ModelRun prepareModelRun(Long modelId, Map<String, String> queryParams) {
         Optional<Model> modelOpt = modelRepository.findById(modelId);
         if (modelOpt.isEmpty()) throw new IllegalArgumentException("Invalid model id: " + modelId);
 
         Model model = modelOpt.get();
+        String seasons = queryParams.get("seasons");
+        if (seasons == null) throw new IllegalArgumentException("seasons required for training data");
+        
+        ModelRun modelRun = modelRunRepository.save(new ModelRun(model, LocalDateTime.now(), "STARTED"));
+        logger.info("Created model run with id: {} for model: {}", modelRun.getId(), model.getName());
+        return modelRun;
+    }
+    
+    public void startModelTraining(Long modelId, Long modelRunId, Map<String, String> queryParams) {
+        Optional<Model> modelOpt = modelRepository.findById(modelId);
+        if (modelOpt.isEmpty()) throw new IllegalArgumentException("Invalid model id: " + modelId);
+        
+        Model model = modelOpt.get();
         String seasons = queryParams.remove("seasons");
         if (seasons == null) throw new IllegalArgumentException("seasons required for training data");
-        List<Integer> years = Arrays.stream(seasons.split(",")).map(s -> Integer.parseInt(s)).toList();
+        List<Integer> years = Arrays.stream(seasons.split(",")).map(Integer::parseInt).toList();
         List<Game> games = new ArrayList<>();
 
         if (model.getType().toUpperCase().contains("SINGLESEASON")) {
-            games.addAll(seasonRepository.findByYear(years.get(0)).get(0).getGames());
+            List<Game> seasonGames = gameRepository.findBySeasonYear(years.getFirst());
+            games.addAll(seasonGames);
         } else {
             for (Integer year : years) {
-                games.addAll(seasonRepository.findByYear(year).get(0).getGames());
+                List<Game> seasonGames = gameRepository.findBySeasonYear(year);
+                games.addAll(seasonGames);
             }
         }
         Map<String, Object> parameters = new HashMap<>(queryParams);
@@ -136,17 +152,13 @@ public class MachineLearningService {
             features.add(models.get(model.getName()).features(g));
             labels.add(models.get(model.getName()).labels(g));
         });
-        ModelRun modelRun = new ModelRun(model, LocalDateTime.now(), "STARTED");
-        //TODO save parms
-        modelRun = modelRunRepository.save(modelRun);
+        
         logger.info("Starting training for model: {}", model.getName());
         Map<String, Object> body = Map.of("parameters", parameters, "features", features, "labels", labels);
-        String url = apiUrl + "/ml/train?model_name=" + model.getName() + "&model_run_id=" + modelRun.getId();
+        String url = apiUrl + "/ml/train?model_name=" + model.getName() + "&model_run_id=" + modelRunId;
         logger.info("URL = "+url);
-       ResponseEntity<String> resp = restTemplate.postForEntity(url, body, String.class);
-    logger.info("Created model run with id: {} for model: {}", modelRun.getId(), model.getName());
-    return modelRun;
-
+        ResponseEntity<String> resp = restTemplate.postForEntity(url, body, String.class);
+        logger.info("Training request sent for model: {}", model.getName());
     }
 
     public String loadPredictions(Model model, ModelRun modelRun, Map<String, String> queryParams) {
@@ -215,8 +227,5 @@ public class MachineLearningService {
         if (date.getMonthValue()<5) return date.getYear();
         else if (date.getMonthValue()>10) return date.getYear()+1;
         else throw new IllegalArgumentException("Non seasonal date" + date);
-    }
-    private List<Game> loadGames(String seasons, Map<String, String> queryParams) {
-        return null;
     }
 }
