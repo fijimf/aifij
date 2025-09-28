@@ -28,12 +28,4 @@ public interface StatisticService {
      * @return List of TeamStatistic objects ordered by value (descending if higher is better, ascending if lower is better)
      */
     List<TeamStatistic> getTopTeamsByDate(Long seasonId, String statisticTypeName, LocalDate date, int limit);
-    
-    /**
-     * Calculates and persists statistics for a given season and statistic type.
-     * 
-     * @param year The year of the season
-     * @param statisticKey The statistic type key to calculate
-     */
-    void calculateStatisticsForSeason(Integer year, String statisticKey);
-} 
+}
