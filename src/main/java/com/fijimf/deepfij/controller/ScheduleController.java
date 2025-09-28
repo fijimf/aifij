@@ -3,7 +3,12 @@ package com.fijimf.deepfij.controller;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
+import com.fijimf.deepfij.service.ScheduleService;
 import com.fijimf.deepfij.service.TournamentBuilder;
 import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
@@ -37,21 +42,23 @@ public class ScheduleController {
     private final TeamRepository teamRepository;
     private final GameRepository gameRepository;
     private final TournamentBuilder tournamentBuilder;
+    private final ScheduleService scheduleService;
 
     @Autowired
-    public ScheduleController(SeasonRepository seasonRepository, TeamRepository teamRepository, GameRepository gameRepository, TournamentBuilder tournamentBuilder) {
+    public ScheduleController(SeasonRepository seasonRepository, TeamRepository teamRepository, GameRepository gameRepository, TournamentBuilder tournamentBuilder, ScheduleService scheduleService) {
         this.seasonRepository = seasonRepository;
         this.teamRepository = teamRepository;
         this.gameRepository = gameRepository;
         this.tournamentBuilder = tournamentBuilder;
+        this.scheduleService = scheduleService;
     }
 
     @Cacheable(value = "teamPages", key = "#year + '-' + #teamId")
     @GetMapping("/team/{teamId}")
     public ResponseEntity<ApiResponse<TeamPage>> getTeamData(@PathVariable Long teamId, @RequestParam(required = false) Integer year) {
 
-       logger.info(teamId.toString());
-       Season season;
+        logger.info(teamId.toString());
+        Season season;
         if (year == null) {
             season = seasonRepository.findFirstByOrderByYearDesc(); // Fetch most recent season
         } else {
@@ -92,14 +99,14 @@ public class ScheduleController {
             season = seasons.getFirst(); // Fetch season by year
         }
         if (season == null) return ResponseEntity.status(404).body(ApiResponse.error("Season not found"));
-        
+
         List<Team> teams = teamRepository.findAll();
         return ResponseEntity.ok(ApiResponse.success(TeamsByConferencePage.create(teams, season)));
 
     }
 
     @GetMapping("/tournament")
-    public ResponseEntity<ApiResponse<TournamentBuilder.Tournament>> getTournament( @RequestParam(required = false) Integer year) {
+    public ResponseEntity<ApiResponse<TournamentBuilder.Tournament>> getTournament(@RequestParam(required = false) Integer year) {
         Season season;
         if (year == null) {
             season = seasonRepository.findFirstByOrderByYearDesc(); // Fetch most recent season
@@ -108,110 +115,24 @@ public class ScheduleController {
         }
         if (season == null) return ResponseEntity.status(404).body(ApiResponse.error("Season not found"));
 
-       return ResponseEntity.ok(ApiResponse.success(tournamentBuilder.build(season)));
+        return ResponseEntity.ok(ApiResponse.success(tournamentBuilder.build(season)));
 
 
     }
 
-    @Cacheable(value = "gamesByDate", key = "#season + '-' + #yyyymmdd")
-    @GetMapping("/games/{season}/{yyyymmdd}")
-    public ResponseEntity<ApiResponse<GamesByDateDTO>> getGamesByDate(@PathVariable int season, @PathVariable String yyyymmdd) {
-        logger.info("Fetching games for season {} on date {}", season, yyyymmdd);
-        
-        LocalDate date;
-        try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-            date = LocalDate.parse(yyyymmdd, formatter);
-        } catch (Exception e) {
-            return ResponseEntity.status(400).body(ApiResponse.error("Invalid date format. Expected yyyyMMdd"));
-        }
-        
-        Season seasonEntity = seasonRepository.findByYear(season).stream()
-                .findFirst()
-                .orElse(null);
-        
-        if (seasonEntity == null) {
-            return ResponseEntity.status(404).body(ApiResponse.error("Season not found: " + season));
-        }
-        
-        List<Game> games = gameRepository.findBySeasonAndIndexDate(seasonEntity, date);
-        
-        List<GameDTO> gameDTOs = games.stream()
-                .map(game -> GameDTO.fromGame(game, null))
-                .toList();
-        
-        GamesByDateDTO response = new GamesByDateDTO(season, date, gameDTOs);
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
-    @Cacheable(value = "gamesBySeason", key = "#season")
-    @GetMapping("/games/{season}")
-    public ResponseEntity<ApiResponse<GamesByDateDTO>> getGamesBySeason(@PathVariable int season) {
-        logger.info("Fetching games for season {}", season);
-        
-        Season seasonEntity = seasonRepository.findByYear(season).stream()
-                .findFirst()
-                .orElse(null);
-        
-        if (seasonEntity == null) {
-            return ResponseEntity.status(404).body(ApiResponse.error("Season not found: " + season));
-        }
-        
-        LocalDate today = LocalDate.now();
-        LocalDate targetDate;
-        
-        // Check if today falls within the season
-        if (!today.isBefore(seasonEntity.getStartDate()) && !today.isAfter(seasonEntity.getEndDate())) {
-            targetDate = today;
+    @Cacheable(value = "gamesByDate", key = "#yyyymmdd")
+    @GetMapping({"/games/{yyyymmdd}", "/games"})
+    public ResponseEntity<ApiResponse<GamesByDateDTO>> getGamesByDate(@PathVariable(required = false) String yyyymmdd) {
+        if (yyyymmdd==null || yyyymmdd.isBlank()) {
+            return ResponseEntity.ok(ApiResponse.success(scheduleService.fetchGamesByDateDTO(LocalDate.now())));
         } else {
-            // Use the last date with completed games
-            targetDate = gameRepository.findLastCompletedGameDate(seasonEntity);
-            if (targetDate == null) {
-                return ResponseEntity.status(404).body(ApiResponse.error("No completed games found for season: " + season));
+            try {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+                return ResponseEntity.ok(ApiResponse.success(scheduleService.fetchGamesByDateDTO(LocalDate.parse(yyyymmdd, formatter))));
+            } catch (Exception e) {
+                return ResponseEntity.status(400).body(ApiResponse.error("Invalid date format. Expected yyyyMMdd"));
             }
         }
-        
-        List<Game> games = gameRepository.findBySeasonAndIndexDate(seasonEntity, targetDate);
-        
-        List<GameDTO> gameDTOs = games.stream()
-                .map(game -> GameDTO.fromGame(game, null))
-                .toList();
-        
-        GamesByDateDTO response = new GamesByDateDTO(season, targetDate, gameDTOs);
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
-    @Cacheable(value = "gamesLatest")
-    @GetMapping("/games")
-    public ResponseEntity<ApiResponse<GamesByDateDTO>> getGamesForLatestSeason() {
-        logger.info("Fetching games for latest season");
-        
-        Season latestSeason = seasonRepository.findFirstByOrderByYearDesc();
-        if (latestSeason == null) {
-            return ResponseEntity.status(404).body(ApiResponse.error("No seasons found"));
-        }
-        
-        LocalDate today = LocalDate.now();
-        LocalDate targetDate;
-        
-        // Check if today falls within the season
-        if (!today.isBefore(latestSeason.getStartDate()) && !today.isAfter(latestSeason.getEndDate())) {
-            targetDate = today;
-        } else {
-            // Use the last date with completed games
-            targetDate = gameRepository.findLastCompletedGameDate(latestSeason);
-            if (targetDate == null) {
-                return ResponseEntity.status(404).body(ApiResponse.error("No completed games found for latest season: " + latestSeason.getYear()));
-            }
-        }
-        
-        List<Game> games = gameRepository.findBySeasonAndIndexDate(latestSeason, targetDate);
-        
-        List<GameDTO> gameDTOs = games.stream()
-                .map(game -> GameDTO.fromGame(game, null))
-                .toList();
-        
-        GamesByDateDTO response = new GamesByDateDTO(latestSeason.getYear(), targetDate, gameDTOs);
-        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
+

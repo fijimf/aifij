@@ -2,6 +2,8 @@ package com.fijimf.deepfij.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fijimf.deepfij.model.dto.GameDTO;
+import com.fijimf.deepfij.model.dto.GamesByDateDTO;
 import com.fijimf.deepfij.model.schedule.Conference;
 import com.fijimf.deepfij.model.schedule.ConferenceMapping;
 import com.fijimf.deepfij.model.schedule.Game;
@@ -414,5 +416,12 @@ public class ScheduleService {
 
         return (int) gamesDeleted;
     }
+
+    public GamesByDateDTO fetchGamesByDateDTO(LocalDate date) {
+        int year = Season.yearFromDate(date);
+        List<GameDTO> games = gameRepository.findBySeasonYear(year).stream().filter(g->g.getDate().equals(date)).map(g->GameDTO.fromGame(g,"")).toList();
+        return new GamesByDateDTO(year, date, games );
+    }
+
 
 }

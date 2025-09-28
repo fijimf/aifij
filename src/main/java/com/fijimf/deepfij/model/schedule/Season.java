@@ -49,6 +49,11 @@ public class Season {
     public Season() {
     }
 
+    public static int yearFromDate(LocalDate date) {
+        if (date.getMonthValue()>10) return date.getYear()+1;
+        else return date.getYear();
+    }
+
     // Getters and setters
     public Long getId() {
         return id;
