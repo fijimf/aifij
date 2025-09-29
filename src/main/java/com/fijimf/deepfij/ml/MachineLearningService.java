@@ -2,11 +2,10 @@ package com.fijimf.deepfij.ml;
 
 import com.fijimf.deepfij.model.ml.Model;
 import com.fijimf.deepfij.model.ml.ModelRun;
+import com.fijimf.deepfij.model.ml.ModelRunMetric;
+import com.fijimf.deepfij.model.ml.ModelRunParam;
 import com.fijimf.deepfij.model.schedule.Game;
-import com.fijimf.deepfij.repo.GameRepository;
-import com.fijimf.deepfij.repo.ModelRepository;
-import com.fijimf.deepfij.repo.ModelRunRepository;
-import com.fijimf.deepfij.repo.SeasonRepository;
+import com.fijimf.deepfij.repo.*;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,8 +37,10 @@ public class MachineLearningService {
 
     private final RestTemplate restTemplate;
     private final String apiUrl;
+    private final ModelRunMetricRepository modelRunMetricRepository;
+    private final ModelRunParamRepository modelRunParamRepository;
 
-    public MachineLearningService(GameRepository gameRepository, ModelRepository modelRepository, ModelRunRepository modelRunRepository, ApplicationContext applicationContext, SeasonRepository seasonRepository, RestTemplate restTemplate, @Value("${pystats.api.url:http://127.0.0.1:5000}/api") String apiUrl) {
+    public MachineLearningService(GameRepository gameRepository, ModelRepository modelRepository, ModelRunRepository modelRunRepository, ApplicationContext applicationContext, SeasonRepository seasonRepository, RestTemplate restTemplate, @Value("${pystats.api.url:http://127.0.0.1:5000}/api") String apiUrl, ModelRunMetricRepository modelRunMetricRepository, ModelRunParamRepository modelRunParamRepository) {
         this.gameRepository = gameRepository;
         this.modelRepository = modelRepository;
         this.modelRunRepository = modelRunRepository;
@@ -47,6 +48,8 @@ public class MachineLearningService {
         this.seasonRepository = seasonRepository;
         this.restTemplate = restTemplate;
         this.apiUrl = apiUrl;
+        this.modelRunMetricRepository = modelRunMetricRepository;
+        this.modelRunParamRepository = modelRunParamRepository;
     }
 
     @PostConstruct
@@ -121,6 +124,9 @@ public class MachineLearningService {
         if (seasons == null) throw new IllegalArgumentException("seasons required for training data");
         
         ModelRun modelRun = modelRunRepository.save(new ModelRun(model, LocalDateTime.now(), "STARTED"));
+        queryParams.entrySet().stream().forEach(entry -> {
+            modelRunParamRepository.save(new ModelRunParam(modelRun, entry.getKey(), entry.getValue()));
+        });
         logger.info("Created model run with id: {} for model: {}", modelRun.getId(), model.getName());
         return modelRun;
     }
