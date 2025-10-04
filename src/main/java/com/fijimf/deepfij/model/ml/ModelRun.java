@@ -1,7 +1,10 @@
 package com.fijimf.deepfij.model.ml;
 
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "model_runs")
@@ -24,12 +27,21 @@ public class ModelRun {
     @Column(name = "run_result")
     private byte[] runResult;
 
-    public ModelRun() {}
+    @OneToMany(mappedBy = "modelRun", fetch = FetchType.EAGER)
+    private List<ModelRunParam> modelRunParams;
+
+    @OneToMany(mappedBy = "modelRun", fetch = FetchType.EAGER)
+    private List<ModelRunMetric> modelRunMetrics;
+
+    public ModelRun() {
+    }
 
     public ModelRun(Model model, LocalDateTime runDate, String runStatus) {
         this.model = model;
         this.runDate = runDate;
         this.runStatus = runStatus;
+        this.modelRunParams = new ArrayList<>();
+        this.modelRunMetrics = new ArrayList<>();
     }
 
     public Long getId() {
@@ -70,5 +82,21 @@ public class ModelRun {
 
     public void setRunResult(byte[] runResult) {
         this.runResult = runResult;
+    }
+
+    public List<ModelRunParam> getModelRunParams() {
+        return modelRunParams;
+    }
+
+    public void setModelRunParams(List<ModelRunParam> modelRunParams) {
+        this.modelRunParams = modelRunParams;
+    }
+
+    public List<ModelRunMetric> getModelRunMetrics() {
+        return modelRunMetrics;
+    }
+
+    public void setModelRunMetrics(List<ModelRunMetric> modelRunMetrics) {
+        this.modelRunMetrics = modelRunMetrics;
     }
 }

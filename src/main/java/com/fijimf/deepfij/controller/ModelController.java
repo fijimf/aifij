@@ -1,6 +1,7 @@
 package com.fijimf.deepfij.controller;
 
 import com.fijimf.deepfij.ml.MachineLearningService;
+import com.fijimf.deepfij.model.dto.ModelRunsDTO;
 import com.fijimf.deepfij.model.ml.Model;
 import com.fijimf.deepfij.model.ml.ModelRun;
 import com.fijimf.deepfij.repo.ModelRepository;
@@ -48,12 +49,13 @@ public class ModelController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Model>> getModelById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<ModelRunsDTO>> getModelById(@PathVariable Long id) {
         logger.info("Fetching model with id: {}", id);
         try {
             Optional<Model> model = modelRepository.findById(id);
+            List<ModelRun> runs = modelRunRepository.findByModelId(id);
             if (model.isPresent()) {
-                return ResponseEntity.ok(ApiResponse.success(model.get()));
+                return ResponseEntity.ok(ApiResponse.success(ModelRunsDTO.create(model.get(),runs)));
             } else {
                 return ResponseEntity.notFound().build();
             }
@@ -98,13 +100,6 @@ public class ModelController {
                 return ResponseEntity.badRequest()
                         .body(ApiResponse.error("Model run does not belong to specified model"));
             }
-
-            // TODO: Enhance with additional details like parameters and metrics
-            // This could include:
-            // 1. Associated ModelRunParam entities
-            // 2. Associated ModelRunMetric entities
-            // 3. Training progress information
-            
             return ResponseEntity.ok(ApiResponse.success(modelRun));
             
         } catch (Exception e) {
@@ -114,7 +109,7 @@ public class ModelController {
         }
     }
 
-    @DeleteMapping("/{id}/train/{runId}")
+    @DeleteMapping("/{id}/{runId}")
     public ResponseEntity<ApiResponse<String>> deleteModelRun(
             @PathVariable Long id,
             @PathVariable Long runId) {
