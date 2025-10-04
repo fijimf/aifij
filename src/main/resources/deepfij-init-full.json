@@ -41,6 +41,9 @@
       }, {
         "key": "POINTS",
         "seasons": [2023, 2024, 2025]
+      }, {
+        "key": "DECAYING_WONLOST",
+        "seasons": [2023, 2024, 2025]
       }
     ]
   },
