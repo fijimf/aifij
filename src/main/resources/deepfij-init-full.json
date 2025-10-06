@@ -47,6 +47,9 @@
       }, {
         "key": "RPI",
         "seasons": [2023, 2024, 2025]
+      }, {
+        "key": "NORMALIZED_POINTS",
+        "seasons": [2023, 2024, 2025]
       }
     ]
   },

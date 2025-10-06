@@ -41,6 +41,7 @@ import static org.assertj.core.api.Assertions.within;
         PointsStatisticModel.class,
         DecayingWonLostStatisticModel.class,
         RpiStatisticModel.class,
+        NormalizedPointsStatisticModel.class,
         StatisticTypeService.class
 })
 public class StatisticalModelIntegrationTest {
@@ -78,6 +79,9 @@ public class StatisticalModelIntegrationTest {
 
     @Autowired
     private RpiStatisticModel rpiModel;
+
+    @Autowired
+    private NormalizedPointsStatisticModel normalizedPointsModel;
 
     @Autowired
     private StatisticTypeService statisticTypeService;
@@ -130,6 +134,7 @@ public class StatisticalModelIntegrationTest {
         pointsModel.refreshDBTypes();
         decayingWonLostModel.refreshDBTypes();
         rpiModel.refreshDBTypes();
+        normalizedPointsModel.refreshDBTypes();
     }
 
     //TODO test every date
@@ -254,6 +259,40 @@ public class StatisticalModelIntegrationTest {
         assertStat(finalStats, gamma, "RPI_OWP", 0.25);
         assertStat(finalStats, gamma, "RPI_OOWP", 0.75);
         assertStat(finalStats, gamma, "RPI", 0.5625);
+    }
+
+    @Test
+    void testNormalizedPointsStatistics() {
+        // Generate statistics
+        List<TeamStatistic> stats = normalizedPointsModel.generate(testSeason);
+
+        // Get statistics for different days to verify normalization
+        Map<String, TeamStatistic> day1Stats = getStatsForDate(stats, LocalDate.of(2025, 1, 1));
+        Map<String, TeamStatistic> day2Stats = getStatsForDate(stats, LocalDate.of(2025, 1, 2));
+        Map<String, TeamStatistic> day3Stats = getStatsForDate(stats, LocalDate.of(2025, 1, 3));
+
+        // Day 1: First game Alpha 80 vs Beta 70
+        // Both teams have no opponent history, so normalized scores = 0.0
+        assertStat(day1Stats, alpha, "NORM_PF_AVG", 0.0);
+        assertStat(day1Stats, alpha, "NORM_PA_AVG", 0.0);
+        assertStat(day1Stats, beta, "NORM_PF_AVG", 0.0);
+        assertStat(day1Stats, beta, "NORM_PA_AVG", 0.0);
+
+        // Day 2: Game 2 - Gamma 90 vs Delta 85
+        // Gamma and Delta also have no opponent history, so normalized scores = 0.0
+        // Alpha and Beta stats remain the same as Day 1
+        assertStat(day2Stats, gamma, "NORM_PF_AVG", 0.0);
+        assertStat(day2Stats, gamma, "NORM_PA_AVG", 0.0);
+
+        // Day 3: Game 3 - Alpha 75 vs Gamma 80
+        // Alpha's normalized PF: (75 - Gamma's PA mean) / Gamma's PA sd
+        //   Gamma allowed 85 to Delta, mean=85, sd=0 → (75-85) = -10
+        // Gamma's normalized PF: (80 - Alpha's PA mean) / Alpha's PA sd
+        //   Alpha allowed 70 to Beta, mean=70, sd=0 → (80-70) = 10
+        // Alpha's average: (0.0 + (-10)) / 2 = -5.0
+        assertStat(day3Stats, alpha, "NORM_PF_AVG", -5.0);
+        // Gamma's average: (0.0 + 10) / 2 = 5.0
+        assertStat(day3Stats, gamma, "NORM_PF_AVG", 5.0);
     }
 
     // Helper methods
