@@ -8,9 +8,4 @@ import java.util.Map;
 
 public interface FeatureGenerator {
     String getKey();
-
-    List<String> getModelsSupported();
-
-
-    Map<String, Object> generateFeature(Game game);
 }

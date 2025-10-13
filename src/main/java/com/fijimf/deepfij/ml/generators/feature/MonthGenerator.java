@@ -2,18 +2,18 @@ package com.fijimf.deepfij.ml.generators.feature;
 
 import com.fijimf.deepfij.ml.FeatureGenerator;
 import com.fijimf.deepfij.model.schedule.Game;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 
-@Service
-public class TeamNamesGenerator implements FeatureGenerator {
-
+public class MonthGenerator implements FeatureGenerator {
     @Override
     public String getKey() {
-        return "team_names";
+        return "month";
     }
 
 
+    public int generateFeature(Game game) {
+        return game.getDate().getMonthValue();
+    }
 }

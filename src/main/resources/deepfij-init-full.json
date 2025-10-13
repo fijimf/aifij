@@ -60,6 +60,12 @@
         "parameters": {
           "seasons": "2025"
         }
+      },
+      {
+        "name": "kitchen-sink",
+        "parameters": {
+          "seasons": "2023,2024,2025"
+        }
       }
     ]
   }

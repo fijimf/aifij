@@ -4,11 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fijimf.deepfij.model.dto.GameDTO;
 import com.fijimf.deepfij.model.dto.GamesByDateDTO;
-import com.fijimf.deepfij.model.schedule.Conference;
-import com.fijimf.deepfij.model.schedule.ConferenceMapping;
-import com.fijimf.deepfij.model.schedule.Game;
-import com.fijimf.deepfij.model.schedule.Season;
-import com.fijimf.deepfij.model.schedule.Team;
+import com.fijimf.deepfij.model.schedule.*;
 import com.fijimf.deepfij.model.scraping.conference.RawConference;
 import com.fijimf.deepfij.model.scraping.scoreboard.ScoreboardResponse;
 import com.fijimf.deepfij.model.scraping.standings.ConferenceStanding;
@@ -356,7 +352,12 @@ public class ScheduleService {
     }
 
     private static LocalDate getLastComplete(List<Game> games) {
-        return games.stream().filter(Game::isComplete).map(Game::getDate).toList().getLast();
+        List<LocalDate> completeGameDates = games.stream().filter(Game::isComplete).map(Game::getDate).toList();
+        if (completeGameDates.isEmpty()) {
+            return null;
+        } else {
+            return completeGameDates.getLast();
+        }
     }
 
     public ConferenceStatus getConferenceStatus() {
@@ -386,8 +387,14 @@ public class ScheduleService {
         List<Season> seasons = seasonRepository.findByYear(seasonYear);
         if (!seasons.isEmpty()) {
             Season season = seasons.getFirst();
-            LocalDate startDate = getLastComplete(season.getGames()).minusDays(7);
-            getGamesForRange(season, startDate, season.getEndDate());
+            LocalDate lastCompletedDate = getLastComplete(season.getGames());
+            if (lastCompletedDate == null) {
+                LocalDate startDate = season.getStartDate();
+                getGamesForRange(season, startDate, season.getEndDate());
+            } else {
+                LocalDate startDate = lastCompletedDate.minusDays(7);
+                getGamesForRange(season, startDate, season.getEndDate());
+            }
         }
     }
 
@@ -419,8 +426,8 @@ public class ScheduleService {
 
     public GamesByDateDTO fetchGamesByDateDTO(LocalDate date) {
         int year = Season.yearFromDate(date);
-        List<GameDTO> games = gameRepository.findBySeasonYear(year).stream().filter(g->g.getDate().equals(date)).map(g->GameDTO.fromGame(g,"")).toList();
-        return new GamesByDateDTO(year, date, games );
+        List<GameDTO> games = gameRepository.findBySeasonYear(year).stream().filter(g -> g.getDate().equals(date)).map(g -> GameDTO.fromGame(g, "")).toList();
+        return new GamesByDateDTO(year, date, games);
     }
 
 
