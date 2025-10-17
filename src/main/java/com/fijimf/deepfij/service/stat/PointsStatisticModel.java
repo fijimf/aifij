@@ -39,7 +39,8 @@ public class PointsStatisticModel implements StatisticalModel {
                 statisticTypeService.findOrCreateStatisticType("POINTS_AGAINST_AVG", "POINTS_AGAINST_AVG", "Average points against", false, 2, key()),
                 statisticTypeService.findOrCreateStatisticType("POINTS_AGAINST_SD", "POINTS_AGAINST_SD", "Standard deviation of points against", false, 2, key()),
                 statisticTypeService.findOrCreateStatisticType("MARGIN_AVG", "MARGIN_AVG", "Average margin", true, 2, key()),
-                statisticTypeService.findOrCreateStatisticType("MARGIN_SD", "MARGIN_SD", "Standard deviation of margin", false, 2, key()));
+                statisticTypeService.findOrCreateStatisticType("MARGIN_SD", "MARGIN_SD", "Standard deviation of margin", false, 2, key()),
+                statisticTypeService.findOrCreateStatisticType("PTS_FOR_PTS_AGAINST_COV", "PTS_FOR_PTS_AGAINST_COV", "Covariance of points for and points against", false, 4, key()));
     }
 
     @Override
@@ -51,6 +52,7 @@ public class PointsStatisticModel implements StatisticalModel {
         StatisticType pointsAgainstStdDev = statisticTypeService.findStatisticType("POINTS_AGAINST_SD");
         StatisticType marginAvg = statisticTypeService.findStatisticType("MARGIN_AVG");
         StatisticType marginStdDev = statisticTypeService.findStatisticType("MARGIN_SD");
+        StatisticType ptsForPtsAgainstCov = statisticTypeService.findStatisticType("PTS_FOR_PTS_AGAINST_COV");
 
         // Get all games for the season ordered by date
         List<Game> games = gameRepository.findBySeasonOrderByDateAsc(season);
@@ -93,12 +95,14 @@ public class PointsStatisticModel implements StatisticalModel {
                 double[] pf = StatsCalculator.calculateStats(pointsFor.get(team));
                 double[] pa = StatsCalculator.calculateStats(pointsAgainst.get(team));
                 double[] mrg = StatsCalculator.calculateStats(margins.get(team));
+                double covariance = StatsCalculator.calculateCovariance(pointsFor.get(team), pointsAgainst.get(team));
                 statistics.add(base.withType(pointsForAvg).withValue(BigDecimal.valueOf(pf[0])).build());
                 statistics.add(base.withType(pointsForStdDev).withValue(BigDecimal.valueOf(pf[1])).build());
                 statistics.add(base.withType(pointsAgainstAvg).withValue(BigDecimal.valueOf(pa[0])).build());
                 statistics.add(base.withType(pointsAgainstStdDev).withValue(BigDecimal.valueOf(pa[1])).build());
                 statistics.add(base.withType(marginAvg).withValue(BigDecimal.valueOf(mrg[0])).build());
                 statistics.add(base.withType(marginStdDev).withValue(BigDecimal.valueOf(mrg[1])).build());
+                statistics.add(base.withType(ptsForPtsAgainstCov).withValue(BigDecimal.valueOf(covariance)).build());
             }
         }
         return statistics;
@@ -113,6 +117,24 @@ public class PointsStatisticModel implements StatisticalModel {
                     stats.getMean(),
                     stats.getStandardDeviation()
             };
+        }
+
+        public static double calculateCovariance(List<Integer> x, List<Integer> y) {
+            if (x.size() != y.size() || x.isEmpty()) {
+                return 0.0;
+            }
+
+            // Calculate means
+            double meanX = x.stream().mapToDouble(Integer::doubleValue).average().orElse(0.0);
+            double meanY = y.stream().mapToDouble(Integer::doubleValue).average().orElse(0.0);
+
+            // Calculate covariance
+            double covariance = 0.0;
+            for (int i = 0; i < x.size(); i++) {
+                covariance += (x.get(i) - meanX) * (y.get(i) - meanY);
+            }
+
+            return covariance / x.size();
         }
     }
 
