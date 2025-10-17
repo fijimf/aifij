@@ -8,6 +8,7 @@ import com.fijimf.deepfij.repo.TeamStatisticRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,7 +42,7 @@ public class KitchenSink implements ModelImpl {
 
     @Override
     public String name() {
-        return "kitchen sink";
+        return "kitchen-sink";
     }
 
     @Override
@@ -66,18 +67,18 @@ public class KitchenSink implements ModelImpl {
 
     @Override
     public Map<String, Object> features(Game game) {
-        return Map.of(
-                "day_of_season", dayOfSeason.generateFeature(game),
-                "wins", wins.generateFeature(game, "home", "z", 0),
-                "losses", losses.generateFeature(game, "home", "z", 0),
-                "weekAgoWins", wins.generateFeature(game, "home", "z", 7),
-                "regression", linear.generateFeature(game, "home", "z", 0),
-                "logistic", logistic.generateFeature(game, "home", "z", 0),
-                "rpi", rpi.generateFeature(game, "home", "z", 0),
-                "normalizedPF", normalizedPF.generateFeature(game, "home", "z", 0),
-                "decayWP", decayWp.generateFeature(game, "home", "z", 0)
-        );
+        Map<String, Object> features = new HashMap<>();
 
+        features.put("day_of_season", dayOfSeason.generateFeature(game));
+        features.put("wins", wins.generateFeature(game, "home", "z", 0));
+        features.put("losses", losses.generateFeature(game, "home", "z", 0));
+        features.put("weekAgoWins", wins.generateFeature(game, "home", "z", 7));
+        features.put("regression", linear.generateFeature(game, "home", "z", 0));
+        features.put("logistic", logistic.generateFeature(game, "home", "z", 0));
+        features.put("rpi", rpi.generateFeature(game, "home", "z", 0));
+        features.put("normalizedPF", normalizedPF.generateFeature(game, "home", "z", 0));
+        features.put("decayWP", decayWp.generateFeature(game, "home", "z", 0));
+        return features;
     }
 
     @Override
