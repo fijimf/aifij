@@ -4,9 +4,9 @@ import com.fijimf.deepfij.model.schedule.Game;
 
 import java.time.LocalDate;
 
-public record GameDTO(long id, int season, LocalDate date, TeamDTO homeTeam, TeamDTO awayTeam, Integer homeTeamSeed, Integer awayTeamSeed, int homeScore,
-                      int awayScore, String round) {
-    public static GameDTO fromGame(Game game, String round) {
+public record GameDTO(long id, int season, LocalDate date, TeamDTO homeTeam, TeamDTO awayTeam, Integer homeTeamSeed, Integer awayTeamSeed, Integer homeScore,
+                      Integer awayScore, boolean isNeutral, ConferenceDTO conferenceDTO, String spread, Double overUnder, Integer homeMoneyLine, Integer awayMoneyLine) {
+    public static GameDTO fromGame(Game game) {
         return new GameDTO(game.getId(),
                 game.getSeason().getYear(),
                 game.getDate(),
@@ -16,6 +16,11 @@ public record GameDTO(long id, int season, LocalDate date, TeamDTO homeTeam, Tea
                 game.getAwayTeamSeed(),
                 game.getHomeScore(),
                 game.getAwayScore(),
-        round);
+        game.isNeutralGame(), game.isConferenceGame()?ConferenceDTO.fromConference(game.getHomeTeamConference(),null):null,
+                game.getSpreadDescription(),
+                game.getOverUnder(),
+                game.getHomeMoneyLine(),
+                game.getAwayMoneyLine()
+        );
     }
 }

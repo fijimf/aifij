@@ -426,8 +426,8 @@ public class ScheduleService {
 
     public GamesByDateDTO fetchGamesByDateDTO(LocalDate date) {
         int year = Season.yearFromDate(date);
-        List<GameDTO> games = gameRepository.findBySeasonYear(year).stream().filter(g -> g.getDate().equals(date)).map(g -> GameDTO.fromGame(g, "")).toList();
-        return new GamesByDateDTO(year, date, games);
+        List<GameDTO> games = gameRepository.findBySeasonYear(year).stream().filter(g -> g.getDate().equals(date)).map(GameDTO::fromGame).toList();
+        return new GamesByDateDTO(year, date.format(DateTimeFormatter.ofPattern("yyyyMMdd")), games);
     }
 
 

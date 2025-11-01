@@ -58,9 +58,6 @@ public record TeamPage(Integer season, List<Integer> seasons, TeamDTO team, Map<
 
     }
 
-    public record ConferenceDTO(Long id, String name, String shortName, String logoUrl, List<StandingDTO> standings) {
-    }
-
     public record StandingDTO(TeamDTO team, Record conferenceRecord, Record overallRecord) {
     }
 

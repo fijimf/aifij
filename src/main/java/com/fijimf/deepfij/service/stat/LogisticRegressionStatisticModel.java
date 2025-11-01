@@ -23,6 +23,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class LogisticRegressionStatisticModel implements StatisticalModel {
@@ -69,6 +71,7 @@ public class LogisticRegressionStatisticModel implements StatisticalModel {
         StatisticType type = statisticTypeService.findStatisticType("LOGISTIC_REGRESSION");
         String url = String.format(apiUrl +"/api/rankings/logistic?year=%d", season.getYear());
         JsonNode response = restTemplate.getForObject(url, JsonNode.class);
+        Map<String, Team> teamMap = teamRepository.findAll().stream().collect(Collectors.toMap(Team::getAbbreviation, team -> team));
         List<TeamStatistic> statistics = new ArrayList<>();
         if (response != null && response.has("data")) {
             JsonNode data = response.get("data");
@@ -77,7 +80,7 @@ public class LogisticRegressionStatisticModel implements StatisticalModel {
                 JsonNode dateData = entry.getValue();
 
                 dateData.fields().forEachRemaining(teamEntry -> {
-                    Team t = teamRepository.findByAbbreviation(teamEntry.getKey());
+                    Team t = teamMap.get(teamEntry.getKey());
                     statistics.add(new TeamStatistic.TeamStatisticBuilder()
                             .withSeason(season)
                             .withDate(date)

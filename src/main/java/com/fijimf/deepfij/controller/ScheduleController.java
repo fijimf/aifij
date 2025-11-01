@@ -130,7 +130,7 @@ public class ScheduleController {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
                 return ResponseEntity.ok(ApiResponse.success(scheduleService.fetchGamesByDateDTO(LocalDate.parse(yyyymmdd, formatter))));
             } catch (Exception e) {
-                return ResponseEntity.status(400).body(ApiResponse.error("Invalid date format. Expected yyyyMMdd"));
+                return ResponseEntity.status(400).body(ApiResponse.error(e.getMessage()));
             }
         }
     }

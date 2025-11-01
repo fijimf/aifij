@@ -4,7 +4,7 @@ import com.fijimf.deepfij.model.dto.StatSummaryPage;
 import com.fijimf.deepfij.model.schedule.Season;
 import com.fijimf.deepfij.repo.SeasonRepository;
 import com.fijimf.deepfij.response.ApiResponse;
-import com.fijimf.deepfij.service.impl.StatisticServiceImpl;
+import com.fijimf.deepfij.service.StatisticalService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,18 +22,18 @@ import java.util.List;
 public class StatsController {
     private static final Logger logger = LoggerFactory.getLogger(StatsController.class);
 
-    private final StatisticServiceImpl statisticService; // Inject SeasonRepository
-    private final SeasonRepository seasonRepository; // Inject SeasonRepository
+    private final StatisticalService statisticalService;
+    private final SeasonRepository seasonRepository;
 
     @Autowired
-    public StatsController(StatisticServiceImpl statisticService, SeasonRepository seasonRepository) {
-        this.statisticService = statisticService;
+    public StatsController(StatisticalService statisticalService, SeasonRepository seasonRepository) {
+        this.statisticalService = statisticalService;
         this.seasonRepository = seasonRepository;
     }
 
     @GetMapping("/stats")
     public ResponseEntity<ApiResponse<List<String>>> getStats() {
-        return ResponseEntity.ok(ApiResponse.success(statisticService.getModelStats()));
+        return ResponseEntity.ok(ApiResponse.success(statisticalService.getModelStats()));
     }
 
     @GetMapping("/stats/{statName}/summary")
@@ -53,9 +53,9 @@ public class StatsController {
             LocalDate d = LocalDate.parse(yyyymmdd, DateTimeFormatter.ofPattern("yyyyMMdd"));
             if (season.getStartDate().isAfter(d) || season.getEndDate().isBefore(d))
                 throw new IllegalArgumentException("Specified date is not within the season");
-            return ResponseEntity.ok(ApiResponse.success(statisticService.getStatSummaryPage(statName, season, d)));
+            return ResponseEntity.ok(ApiResponse.success(statisticalService.getStatSummaryPage(statName, season, d)));
         } else {
-            return ResponseEntity.ok(ApiResponse.success(statisticService.getStatSummaryPage(statName, season)));
+            return ResponseEntity.ok(ApiResponse.success(statisticalService.getStatSummaryPage(statName, season)));
         }
 
     }

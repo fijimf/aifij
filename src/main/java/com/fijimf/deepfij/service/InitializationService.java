@@ -26,7 +26,6 @@ public class InitializationService {
     private static final Logger logger = LoggerFactory.getLogger(InitializationService.class);
 
     private final ScheduleService scheduleService;
-    private final StatisticService statisticService;
     private final MachineLearningService machineLearningService;
     private final TeamRepository teamRepository;
     private final ConferenceRepository conferenceRepository;
@@ -43,7 +42,6 @@ public class InitializationService {
 
     public InitializationService(
             ScheduleService scheduleService,
-            StatisticService statisticService,
             MachineLearningService machineLearningService,
             TeamRepository teamRepository,
             ConferenceRepository conferenceRepository,
@@ -56,7 +54,6 @@ public class InitializationService {
             Validator validator,
             @Value("${deepfij.initialization:}") String initializationConfigPath, StatisticalService statisticalService) {
         this.scheduleService = scheduleService;
-        this.statisticService = statisticService;
         this.machineLearningService = machineLearningService;
         this.teamRepository = teamRepository;
         this.conferenceRepository = conferenceRepository;

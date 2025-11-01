@@ -78,7 +78,7 @@ public class TournamentBuilder {
         String round;
 
         public TournamentEntry(Game game, String round) {
-            this.game = GameDTO.fromGame(game, round);
+            this.game = GameDTO.fromGame(game);
         }
 
         public GameDTO getGame() {
