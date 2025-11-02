@@ -180,7 +180,11 @@ public class InitializationService {
             // Handle current season updates
             if (seasonConfig.isCurrent()) {
                 logger.info("Refreshing current season {} with recent games", seasonConfig.year());
-                scheduleService.refresh(seasonConfig.year());
+                int gamesModified = scheduleService.refresh(seasonConfig.year());
+                if (gamesModified > 0) {
+                    logger.info("Refreshed {} games for season {}", gamesModified, seasonConfig.year());
+                    state.seasonsLoaded.put(seasonConfig.year(), true);
+                }
             }
         }
 

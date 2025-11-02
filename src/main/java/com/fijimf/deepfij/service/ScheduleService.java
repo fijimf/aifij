@@ -235,13 +235,14 @@ public class ScheduleService {
         }
     }
 
-    private void getGamesForRange(Season s, LocalDate startDate, LocalDate endDate) {
-        Stream.iterate(startDate, date -> !date.isAfter(endDate), date -> date.plusDays(1)).forEach(
+    private int getGamesForRange(Season s, LocalDate startDate, LocalDate endDate) {
+
+        return Stream.iterate(startDate, date -> !date.isAfter(endDate), date -> date.plusDays(1)).mapToInt(
                 d -> {
                     List<Game> games = refresh(d, s);
-                    updateGames(d, s, games);
+                    return updateGames(d, s, games);
                 }
-        );
+        ).sum();
     }
 
     private long createConferenceMappings(int yyyy, Season s) {
@@ -272,7 +273,8 @@ public class ScheduleService {
         return mappingsDeleted;
     }
 
-    private void updateGames(LocalDate index, Season s, List<Game> games) {
+    private int updateGames(LocalDate index, Season s, List<Game> games) {
+        int updated = 0;
         logger.info("For index {} {} were scraped", index, games.size());
         Map<String, Game> oldGames = gameRepository.findBySeasonAndIndexDate(s, index).stream().collect(Collectors.toMap(Game::getEspnId, Function.identity()));
         logger.info("For index {} {} were in the DB", index, oldGames.size());
@@ -297,6 +299,9 @@ public class ScheduleService {
         entityManager.flush();
 
         logger.info("For index " + index + " there are " + gameRepository.findBySeasonAndIndexDate(s, index).size() + " games");
+        int edits = inserts.size() + updates.size() + deleteGames.size();
+        logger.info("For index " + index + " there were " + edits + " edits");
+        return edits;
     }
 
     private Team findOrCreateTeam(StandingsEntry se) {
@@ -383,19 +388,20 @@ public class ScheduleService {
         }
     }
 
-    public void refresh(int seasonYear) {
+    public int refresh(int seasonYear) {
         List<Season> seasons = seasonRepository.findByYear(seasonYear);
         if (!seasons.isEmpty()) {
             Season season = seasons.getFirst();
             LocalDate lastCompletedDate = getLastComplete(season.getGames());
             if (lastCompletedDate == null) {
                 LocalDate startDate = season.getStartDate();
-                getGamesForRange(season, startDate, season.getEndDate());
+                return getGamesForRange(season, startDate, season.getEndDate());
             } else {
                 LocalDate startDate = lastCompletedDate.minusDays(7);
-                getGamesForRange(season, startDate, season.getEndDate());
+                return getGamesForRange(season, startDate, season.getEndDate());
             }
         }
+        return 0;
     }
 
     public record ScheduleStatus(TeamStatus teamStatus, ConferenceStatus conferenceStatus, List<SeasonStatus> seasons) {
