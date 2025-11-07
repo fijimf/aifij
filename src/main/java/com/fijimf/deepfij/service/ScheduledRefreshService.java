@@ -48,7 +48,7 @@ public class ScheduledRefreshService {
         this.initializationConfigPath = initializationConfigPath;
     }
 
-    @Scheduled(cron = "${deepfij.refresh.cron}")
+    @Scheduled(cron = "${deepfij.refresh.cron}", zone = "America/New_York")
     @Transactional
     public void refreshCurrentSeasons() {
         logger.info("Starting scheduled refresh of current seasons");
