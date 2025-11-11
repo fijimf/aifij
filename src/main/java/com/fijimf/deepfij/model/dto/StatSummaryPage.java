@@ -25,7 +25,7 @@ public record StatSummaryPage(
         List<TeamStatisticStub> teamStatisticStubs = teamStatistics.stream().map(teamStatistic -> TeamStatisticStub.fromTeamStatistic(teamStatistic, teamStatistics.indexOf(teamStatistic)+1)).toList();
         List<SummaryStub> summaryStubs= descriptiveStatsByDate.entrySet().stream().map(e->SummaryStub.fromDescriptiveStatistics(e.getKey(),e.getValue())).sorted(Comparator.comparing(SummaryStub::date)).toList();
 
-
+        LocalDate asOfActual = teamStatistics.getFirst().getStatisticDate();
         return new StatSummaryPage(
                 statisticType.getModelKey(),
                 statisticType.getName(),
@@ -34,7 +34,7 @@ public record StatSummaryPage(
                 asOf,
                 statisticType.getIsHigherBetter(),
                 statisticType.getDecimalPlaces(),
-                summaryStubs.stream().filter(s->s.date().isEqual(asOf)).findFirst().orElseThrow(),
+                SummaryStub.fromDescriptiveStatistics(asOfActual, descriptiveStatsByDate.get(asOfActual)),
                 correctRanks(teamStatisticStubs, statisticType.getIsHigherBetter()),
                 summaryStubs);
     }

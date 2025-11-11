@@ -12,7 +12,7 @@ public record TeamPage(Integer season, List<Integer> seasons, TeamDTO team, Map<
 
     public static TeamPage create(Team t, Season s, List<Integer> seasons) {
         List<Game> allGames = s.getGames();
-        List<Game> games = allGames.stream().filter(game -> game.getHomeTeam().equals(t) || game.getAwayTeam().equals(t)).toList();
+        List<Game> games = allGames.stream().filter(game -> game.getHomeTeam().equals(t) || game.getAwayTeam().equals(t)).sorted(Comparator.comparing(Game::getDate)).toList();
         Conference c = s.getConferenceMappings().stream().filter(mapping -> mapping.getTeam().equals(t)).map(ConferenceMapping::getConference).findFirst().orElseThrow(RuntimeException::new);
         Set<Team> conferenceTeams = s.getConferenceMappings()
                 .stream()

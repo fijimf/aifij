@@ -223,18 +223,9 @@ public class StatisticalService {
     public StatSummaryPage getStatSummaryPage(String statisticTypeName, Season season, LocalDate date) {
         StatisticType statisticType = statisticTypeRepository.findByName(statisticTypeName)
                 .orElseThrow(() -> new IllegalArgumentException("Statistic type not found: " + statisticTypeName));
-        Optional<LocalDate> lastCompleteDate = season.getGames()
-                .stream()
-                .filter(Game::isComplete)
-                .map(Game::getDate)
-                .max(LocalDate::compareTo);
-        if (lastCompleteDate.isPresent()) {
-            List<TeamStatistic> teamStatistics = getTopTeamsByDate(season.getId(), statisticTypeName, lastCompleteDate.get(), 0);
-            SortedMap<LocalDate, DescriptiveStatistics> descriptiveStatsByDate = getDescriptiveTimeSeries(statisticTypeName, season);
-            return StatSummaryPage.create(season, date, statisticType, teamStatistics, descriptiveStatsByDate);
-        } else {
-            throw new IllegalArgumentException("No completed games found for season: " + season.getYear());
-        }
+        List<TeamStatistic> teamStatistics = teamStatisticRepository.findLatestBeforeDate(season.getId(), statisticType.getId(), date);
+        SortedMap<LocalDate, DescriptiveStatistics> descriptiveStatsByDate = getDescriptiveTimeSeries(statisticTypeName, season);
+        return StatSummaryPage.create(season, date, statisticType, teamStatistics, descriptiveStatsByDate);
     }
 
     /**
