@@ -84,14 +84,6 @@ public class ScheduledRefreshService {
                 logger.info("Refreshed {} games for season {}", gamesModified, seasonConfig.year());
             }
 
-            // Only update statistics if games were modified
-            if (totalGamesModified > 0) {
-                logger.info("Total games modified: {}, updating statistics", totalGamesModified);
-                updateStatistics(config, gamesModifiedByYear);
-            } else {
-                logger.info("No games were modified, skipping statistics update");
-            }
-
             long duration = System.currentTimeMillis() - startTime;
             logger.info("Scheduled refresh completed successfully in {} ms. Games modified: {}",
                     duration, totalGamesModified);
@@ -101,34 +93,40 @@ public class ScheduledRefreshService {
         }
     }
 
-    private void updateStatistics(InitializationConfig config, Map<Integer, Integer> gamesModifiedByYear) {
-        if (config.statistics() == null || config.statistics().statisticsToLoad().isEmpty()) {
-            logger.info("No statistics configuration provided, skipping statistics update");
+    @Scheduled(cron = "${deepfij.refreshStats.cron}", zone = "America/New_York")
+    @Transactional
+    public void updateStatistics() {
+
+        InitializationConfig config = loadConfiguration();
+
+        if (config.schedule() == null || config.schedule().seasons() == null || config.statistics() == null) {
+            logger.info("Schedule configuration or statistic config missing, skipping refresh");
             return;
         }
 
-        StatisticsConfig statisticsConfig = config.statistics();
+        // Find all current seasons and refresh them
+        List<SeasonConfig> currentSeasons = config.schedule().seasons().stream()
+                .filter(SeasonConfig::isCurrent)
+                .toList();
 
-        for (StatisticToLoadConfig statConfig : statisticsConfig.statisticsToLoad()) {
-            // Validate statistic key exists
-            if (statisticTypeRepository.findByModelKey(statConfig.key()).isEmpty()) {
-                logger.warn("Statistic key '{}' not found in database, skipping", statConfig.key());
-                continue;
-            }
 
-            // Only update statistics for years where games were modified
-            for (Integer year : statConfig.seasons()) {
-                if (gamesModifiedByYear.getOrDefault(year, 0) > 0) {
-                    logger.info("Updating statistics '{}' for season {}", statConfig.key(), year);
-                    try {
-                        statisticalService.generateStatistics(year.toString(), statConfig.key());
-                    } catch (Exception e) {
-                        logger.error("Failed to update statistics '{}' for season {}: {}",
-                                statConfig.key(), year, e.getMessage());
-                    }
+        currentSeasons.forEach(seasonConfig -> {
+            StatisticsConfig statisticsConfig = config.statistics();
+
+            for (StatisticToLoadConfig statConfig : statisticsConfig.statisticsToLoad()) {
+                if (statisticTypeRepository.findByModelKey(statConfig.key()).isEmpty()) {
+                    logger.warn("Statistic key '{}' not found in database, skipping", statConfig.key());
+                    continue;
+                }
+                logger.info("Updating statistics '{}' for season {}", statConfig.key(), seasonConfig.year());
+                try {
+                    statisticalService.generateStatistics(seasonConfig.year().toString(), statConfig.key());
+                } catch (Exception e) {
+                    logger.error("Failed to update statistics '{}' for season {}: {}",
+                            statConfig.key(), seasonConfig.year(), e.getMessage());
                 }
             }
-        }
+        });
     }
 
     private InitializationConfig loadConfiguration() {

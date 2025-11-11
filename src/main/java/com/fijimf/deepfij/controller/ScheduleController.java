@@ -8,13 +8,17 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import com.fijimf.deepfij.model.dto.gamedetail.GameDetail;
+import com.fijimf.deepfij.service.GameDetailService;
 import com.fijimf.deepfij.service.ScheduleService;
 import com.fijimf.deepfij.service.TournamentBuilder;
+import jakarta.persistence.EntityNotFoundException;
 import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -43,14 +47,16 @@ public class ScheduleController {
     private final GameRepository gameRepository;
     private final TournamentBuilder tournamentBuilder;
     private final ScheduleService scheduleService;
+    private final GameDetailService gameDetailService;
 
     @Autowired
-    public ScheduleController(SeasonRepository seasonRepository, TeamRepository teamRepository, GameRepository gameRepository, TournamentBuilder tournamentBuilder, ScheduleService scheduleService) {
+    public ScheduleController(SeasonRepository seasonRepository, TeamRepository teamRepository, GameRepository gameRepository, TournamentBuilder tournamentBuilder, ScheduleService scheduleService, GameDetailService gameDetailService) {
         this.seasonRepository = seasonRepository;
         this.teamRepository = teamRepository;
         this.gameRepository = gameRepository;
         this.tournamentBuilder = tournamentBuilder;
         this.scheduleService = scheduleService;
+        this.gameDetailService = gameDetailService;
     }
 
     @Cacheable(value = "teamPages", key = "#year + '-' + #teamId")
@@ -132,6 +138,23 @@ public class ScheduleController {
             } catch (Exception e) {
                 return ResponseEntity.status(400).body(ApiResponse.error(e.getMessage()));
             }
+        }
+    }
+
+    @GetMapping("/game/{gameId}")
+    public ResponseEntity<ApiResponse<GameDetail>> getGameDetail(@PathVariable Long gameId) {
+        try {
+            logger.info("Fetching game detail for game ID: {}", gameId);
+            GameDetail gameDetail = gameDetailService.getGameDetail(gameId);
+            return ResponseEntity.ok(ApiResponse.success("Game details retrieved successfully", gameDetail));
+        } catch (EntityNotFoundException e) {
+            logger.warn("Game not found with id: {}", gameId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Game not found with id: " + gameId));
+        } catch (Exception e) {
+            logger.error("Error retrieving game details for game ID: {}", gameId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Error retrieving game details"));
         }
     }
 }

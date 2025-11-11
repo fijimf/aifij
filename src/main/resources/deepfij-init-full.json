@@ -31,25 +31,25 @@
     "statisticsToLoad": [
       {
         "key": "WONLOST",
-        "seasons": [2023, 2024, 2025]
+        "seasons": [2023, 2024, 2025, 2026]
       }, {
         "key": "LOGISTIC_REGRESSION",
-        "seasons": [2023, 2024, 2025]
+        "seasons": [2023, 2024, 2025, 2026]
       }, {
         "key": "LINEAR_REGRESSION",
-        "seasons": [2023, 2024, 2025]
+        "seasons": [2023, 2024, 2025, 2026]
       }, {
         "key": "POINTS",
-        "seasons": [2023, 2024, 2025]
+        "seasons": [2023, 2024, 2025, 2026]
       }, {
         "key": "DECAYING_WONLOST",
-        "seasons": [2023, 2024, 2025]
+        "seasons": [2023, 2024, 2025, 2026]
       }, {
         "key": "RPI",
-        "seasons": [2023, 2024, 2025]
+        "seasons": [2023, 2024, 2025, 2026]
       }, {
         "key": "NORMALIZED_POINTS",
-        "seasons": [2023, 2024, 2025]
+        "seasons": [2023, 2024, 2025, 2026]
       }
     ]
   },
@@ -59,12 +59,6 @@
         "name": "naive-linear-regression",
         "parameters": {
           "seasons": "2025"
-        }
-      },
-      {
-        "name": "kitchen-sink",
-        "parameters": {
-          "seasons": "2023,2024,2025"
         }
       }
     ]

@@ -246,7 +246,6 @@ public class InitializationService {
                 if (shouldLoadStatisticsForSeason(statConfig.key(), year, state, count)) {
                     logger.info("Loading statistics '{}' for season {}", statConfig.key(), year);
                     try {
-//                        statisticService.calculateStatisticsForSeason(year, statConfig.key());
                         statisticalService.generateStatistics(year.toString(), statConfig.key());
                     } catch (Exception e) {
                         logger.error("Failed to load statistics '{}' for season {}: {}",

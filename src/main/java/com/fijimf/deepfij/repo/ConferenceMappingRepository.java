@@ -12,8 +12,10 @@ public interface ConferenceMappingRepository extends JpaRepository<ConferenceMap
     List<ConferenceMapping> findBySeason(Season season);
 
     long deleteBySeason(Season s);
-    
+
     Optional<ConferenceMapping> findBySeasonAndTeam(Season season, Team team);
+
+    List<ConferenceMapping> findByTeamAndSeason(Team team, Season season);
 
     long countAllBySeasonEquals(Season s);
 }

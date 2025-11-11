@@ -14,9 +14,12 @@ import com.fijimf.deepfij.service.stat.PointsStatisticModel;
 import com.fijimf.deepfij.service.stat.WonLostStatisticModel;
 import jakarta.annotation.PostConstruct;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.sql.Date;
@@ -26,6 +29,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class StatisticalService {
+    public static final Logger logger = LoggerFactory.getLogger(StatisticalService.class);
     private final TeamStatisticRepository teamStatisticRepository;
     private final SeasonRepository seasonRepository;
     private final StatisticTypeRepository statisticTypeRepository;
@@ -51,6 +55,7 @@ public class StatisticalService {
     }
 
 
+    @Transactional
     public List<TeamStatistic> generateStatistics(String yyyy, String modelKey) {
         Season season = seasonRepository.findByYear(Integer.parseInt(yyyy)).getFirst();
         if (season == null) {
@@ -62,7 +67,12 @@ public class StatisticalService {
         }
 
         List<TeamStatistic> statistics = model.generate(season);
-        return teamStatisticRepository.saveAll(statistics);
+        logger.info("Saving " + statistics.size() + " stats for " + modelKey);
+
+        // Use JDBC batch upsert for maximum performance
+        teamStatisticRepository.batchUpsert(statistics);
+
+        return statistics;
     }
 
 
@@ -97,7 +107,7 @@ public class StatisticalService {
                     Integer.parseInt(seasonKey),
                     ((Long) r.get("num_days")).intValue(),
                     ((BigDecimal) r.get("total")).intValue(),
-                    ( (Date) r.get("last_date")).toLocalDate()
+                    ((Date) r.get("last_date")).toLocalDate()
             );
 
             model.computeIfAbsent(modelKey, k -> new HashMap<>())
@@ -158,10 +168,10 @@ public class StatisticalService {
      * Retrieves the top N teams for a given date, season, and statistic type.
      * The ordering is determined by the isHigherBetter flag in the StatisticType.
      *
-     * @param seasonId The ID of the season
+     * @param seasonId          The ID of the season
      * @param statisticTypeName The name of the statistic type
-     * @param date The date to get statistics for
-     * @param limit The maximum number of teams to return (0 for all teams)
+     * @param date              The date to get statistics for
+     * @param limit             The maximum number of teams to return (0 for all teams)
      * @return List of TeamStatistic objects ordered by value
      */
     public List<TeamStatistic> getTopTeamsByDate(Long seasonId, String statisticTypeName, LocalDate date, int limit) {
@@ -188,7 +198,7 @@ public class StatisticalService {
      * Uses the most recent completed game date.
      *
      * @param statisticTypeName The name of the statistic type
-     * @param season The season
+     * @param season            The season
      * @return StatSummaryPage with statistics and summary data
      */
     public StatSummaryPage getStatSummaryPage(String statisticTypeName, Season season) {
@@ -206,8 +216,8 @@ public class StatisticalService {
      * Gets a statistics summary page for a given statistic type, season, and specific date.
      *
      * @param statisticTypeName The name of the statistic type
-     * @param season The season
-     * @param date The specific date
+     * @param season            The season
+     * @param date              The specific date
      * @return StatSummaryPage with statistics and summary data
      */
     public StatSummaryPage getStatSummaryPage(String statisticTypeName, Season season, LocalDate date) {
@@ -231,7 +241,7 @@ public class StatisticalService {
      * Gets descriptive statistics time series for a statistic type and season.
      *
      * @param statisticTypeName The name of the statistic type
-     * @param season The season
+     * @param season            The season
      * @return Sorted map of dates to descriptive statistics
      */
     private SortedMap<LocalDate, DescriptiveStatistics> getDescriptiveTimeSeries(String statisticTypeName, Season season) {

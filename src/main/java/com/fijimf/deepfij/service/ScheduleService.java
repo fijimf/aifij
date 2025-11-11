@@ -114,7 +114,7 @@ public class ScheduleService {
     }
 
     public List<Game> refresh(LocalDate index, Season season) {
-        logger.info("Fetching games for " + index);
+        logger.trace("Fetching games for " + index);
         ScoreboardResponse scoreboard = scrapingService.fetchScoreboard(Integer.parseInt(index.format(DateTimeFormatter.ofPattern("yyyyMMdd"))));
         if (scoreboard == null) {
             logger.error("Scoreboard for index " + index.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + " is null");
@@ -125,7 +125,7 @@ public class ScheduleService {
                 .findBySeason(season).stream()
                 .map(ConferenceMapping::getTeam)
                 .collect(Collectors.toMap(Team::getEspnId, Function.identity()));
-        logger.info("Scraped " + scoreboard.events().size() + " events for date " + index);
+        logger.trace("Scraped " + scoreboard.events().size() + " events for date " + index);
 
         List<Game> games = scoreboard.events().stream().flatMap(event -> {
             Game g = new Game();
@@ -154,7 +154,7 @@ public class ScheduleService {
                             g.setHomeTeamSeed(competitor.tournamentMatchup().seed());
                         }
                     } else {
-                        logger.error("Team " + competitor.name() + " not found in database");
+                        logger.debug("Team " + competitor.name() + " not found in database");
                     }
                 } else if (competitor.homeAway().equals("away")) {
                     if (teams.containsKey(competitor.id())) {
@@ -167,7 +167,7 @@ public class ScheduleService {
                             g.setAwayTeamSeed(competitor.tournamentMatchup().seed());
                         }
                     } else {
-                        logger.error("Team " + competitor.name() + " not found in database");
+                        logger.debug("Team " + competitor.name() + " not found in database");
                     }
                 }
             });
@@ -185,12 +185,12 @@ public class ScheduleService {
             if (g.getHomeTeam() != null && g.getAwayTeam() != null) {
                 return Stream.of(g);
             } else {
-                logger.error("Game " + event.name() + " has missing teams.");
+                logger.debug("Game " + event.name() + " has missing teams.");
                 return Stream.empty();
             }
         }).toList();
 
-        logger.info("Converted " + games.size() + " games for date " + index);
+        logger.trace("Converted " + games.size() + " games for date " + index);
         return games;
 
     }
@@ -274,34 +274,34 @@ public class ScheduleService {
     }
 
     private int updateGames(LocalDate index, Season s, List<Game> games) {
-        int updated = 0;
-        logger.info("For index {} {} were scraped", index, games.size());
+        RefreshRecord r = new RefreshRecord();
+        r.date = index.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        r.scrapedCount= games.size();
         Map<String, Game> oldGames = gameRepository.findBySeasonAndIndexDate(s, index).stream().collect(Collectors.toMap(Game::getEspnId, Function.identity()));
-        logger.info("For index {} {} were in the DB", index, oldGames.size());
+        r.dbCount= oldGames.size();
 
         Map<Boolean, List<Game>> partitionedGames = games
                 .stream()
                 .collect(Collectors.partitioningBy(g -> oldGames.containsKey(g.getEspnId())));
         List<Game> inserts = partitionedGames.get(false);
-        logger.info("For date " + index + " " + inserts.size() + " were new");
+        r.newGames= inserts.size();
         List<Game> updates = partitionedGames.get(true);
-        gameRepository.saveAll(inserts);
-        logger.info("For date " + index + " " + updates.size() + " were potentially updated.");
+        r.inserts = gameRepository.saveAll(inserts).size();
+        r.matchedGames= updates.size();
 
         List<Game> updatedGames = updates.stream().map(g -> Game.update(oldGames.get(g.getEspnId()), g)).filter(Objects::nonNull).toList();
-        logger.info("For date " + index + " " + updatedGames.size() + " were actually updated");
-        gameRepository.saveAll(updatedGames);
+        r.updates = gameRepository.saveAll(updatedGames).size();
 
         Set<String> ids = games.stream().map(Game::getEspnId).collect(Collectors.toSet());
         List<Game> deleteGames = oldGames.entrySet().stream().filter(e -> !ids.contains(e.getKey())).map(Map.Entry::getValue).toList();
+        r.unmatchedGames= deleteGames.size();
         gameRepository.deleteAll(deleteGames);
-        logger.info("For date " + index + " " + deleteGames.size() + " were deleted");
+        r.deletes = deleteGames.size();
         entityManager.flush();
 
-        logger.info("For index " + index + " there are " + gameRepository.findBySeasonAndIndexDate(s, index).size() + " games");
-        int edits = inserts.size() + updates.size() + deleteGames.size();
-        logger.info("For index " + index + " there were " + edits + " edits");
-        return edits;
+        logger.trace("For index " + index + " there are " + gameRepository.findBySeasonAndIndexDate(s, index).size() + " games");
+        logger.info(r.toString());
+        return r.edits();
     }
 
     private Team findOrCreateTeam(StandingsEntry se) {
@@ -436,5 +436,24 @@ public class ScheduleService {
         return new GamesByDateDTO(year, date.format(DateTimeFormatter.ofPattern("yyyyMMdd")), games);
     }
 
+    private static class RefreshRecord{
+        public String date;
+        public int dbCount;
+        public int scrapedCount;
+        public int newGames;
+        public int matchedGames;
+        public int unmatchedGames;
+        public int inserts;
+        public int updates;
+        public int deletes;
 
+        public int edits() {
+            return inserts + updates + deletes;
+        }
+
+        public String toString() {
+            String format = " %8s | %3d | %3d | %3d | %3d | %3d | %3d | %3d | %3d";
+            return String.format(format, date, dbCount, scrapedCount, newGames, matchedGames, unmatchedGames, inserts, updates, deletes);
+        }
+    }
 }
